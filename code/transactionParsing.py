@@ -48,10 +48,6 @@ transactionObject ={"quantity": "", "qualifier": "", "adjectives": "", "item": "
                         "totalPrice": "", "service": "", "includedItems": ""}
 moneyObject = {"pounds": "", "shilling": "", "pence": ""}
 
-# Initializing variables
-entryError, transArray = None 
-otherItems, peopleArray, placesArray, varientsArray, transError, transReview = [],[],[],[],[],[] 
-
 # Functon for parsing entries begining with an integer
 def intFirstParse(array, transDict):
         # Checks if the 2nd word is in the qualifier list 
@@ -571,6 +567,17 @@ def peopleForFunction (array, transDict):
             if arrEnd > 2 and lem.lemmatize(array[index+1]) in qualifierList:
                 index+1
                 QQI_function(array, index, transDict)
+
+# ******************* VARIABLES USED ******************* #
+# entryError[] = List to store entry errors 
+# transArray[] = Array of tokenizd transactions from Chip's function
+# otherItems[] = List of items associated with a single transaction
+# peopleArray[] = List of people mentioned in a transaction
+# placesArray[] = List of places mentioned in a transaction
+# varientsArray = List of item's adjectives
+# transError[] = List to store entry errors
+# transReview = List of data to review in a transaction
+# ****************************************************** #
 
 # Function that parses the transactions from the entry column (transArr = array/list of transactions)
 def transParse(transArr):    # sourcery skip: hoist-statement-from-loop
