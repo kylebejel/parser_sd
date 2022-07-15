@@ -92,6 +92,27 @@ def preprocess(text):
       if (decimalRE.match(tokens[idx+1])):
         tokens[idx] = tokens[idx] + tokens[idx+1]
         tokens.pop(idx+1)
+  
+  #gluing 'per' and 'cent' together
+  for idx, word in enumerate(tokens):
+    if ((word == 'per' or word == 'Per') and idx+1 < len(tokens)):
+      if (tokens[idx+1] == "cent" or tokens[idx+1] == "Cent"):
+        tokens[idx] = 'percent'
+        tokens.pop(idx+1)
+
+  #changing 'w' and 'wt' to pounds
+  for idx, word in enumerate(tokens):
+    if (numberRE.match(tokens[idx]) and idx+1 < len(tokens)):
+      if (tokens[idx+1] == 'w' or tokens[idx+1] == 'wt'):
+        tokens[idx+1] = 'pounds'
+  numbPounds = re.compile("[0-9]+(\.[0-9]+)?(w|(wt))")
+  for idx, word in enumerate(tokens):
+    if (numbPounds.match(word)):
+      tokens.insert(idx+1, 'pounds')
+      while "wt" in tokens[idx]:
+        tokens[idx] = tokens[idx].replace('wt', "")
+      while "w" in tokens[idx]:
+        tokens[idx] = tokens[idx].replace('w', "")
 
   return tokens
 
