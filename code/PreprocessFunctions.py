@@ -83,7 +83,19 @@ def preprocess(text):
     for fraction in fractions:
       tokens[count] = tokens[count].replace(fraction, fracReplace[fractions.index(fraction)])
 
+  #gluing preceding tokens and fractions together
+  numberRE = re.compile("[0-9]+")
+  decimalRE = re.compile("\.[0-9]+")
+  for idx, word in enumerate(tokens):
+    if (numberRE.match(tokens[idx]) and idx+1 < len(tokens)):
+      print("match" + str(idx))
+      if (decimalRE.match(tokens[idx+1])):
+        tokens[idx] = tokens[idx] + tokens[idx+1]
+        tokens.pop(idx+1)
+
   return tokens
+
+
 
 breakup = seperate(string)#replace string here with variable or string to be handeled
 preprocessed = []
