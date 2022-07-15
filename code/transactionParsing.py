@@ -124,6 +124,7 @@ def findName(array, idx):
 # Function to look for first name or prefix if last name is found
 def lastNameFound(array,idx):
     newPplDict = peopleObject.copy()   # Initializes new people dictionary
+    newPplDict["lastName"] = array[idx]  # Stores last name
     if idx > 0: 
         if array[idx - 1] in people_df["firstName"]: # Checks if first name precedes last name
             newPplDict["firstName"] = array[idx-1]
@@ -303,7 +304,7 @@ def chargedFunction(array):
         findName(array, index)   # Searches for people
 
 # Function for "expense"/"expence" keyword
-def expenseFunction(array, peopleList, transReview, transDict): 
+def expenseFunction(array, peopleArray, transReview, transDict): 
     # Gets the array index for "expense"/"expence"
     if 'expence' in array:
         index = array.index('expence')
@@ -311,26 +312,26 @@ def expenseFunction(array, peopleList, transReview, transDict):
         index = array.index('expense')
 
     arrEnd = len(array)-index  # Saves distance between index and array end
-    newPplDict = peopleObject.copy()   # Initializes new people dictionary
 
     # Checks words preceding "Expense"
     if index > 0:  # Prevents out of bounds index subtraction
         if array[index - 1] in people_df["lastName"]:   # Checks if a last name is preceding
             index = index-1
             pplDict = lastNameFound(array,index)   # Checks for first name
-            pplDict["lastName"] = array[index]  # Stores last name
         elif array[index - 1] in people_df["firstName"]:  # Checks if a first name is preceding
+            newPplDict = peopleObject.copy()   # Initializes new people dictionary
             newPplDict["firstName"] = array[index-1]
             if index > 1 and array[index-2] in prefixList:   # Checks if a prefix is preceding
                 newPplDict["prefix"] = array[index-2]
         elif array[index-1] not in ["the", "for"]:   # Checks if "the" or "for" are preceding
+            newPplDict = peopleObject.copy()   # Initializes new people dictionary
             newPplDict["Account"] = f"{array[index-1]} Expenses" # Saves Account Name
         elif array[index - 1] in suffixList and index > 1:   # Checks if suffix is preceding
             index = index-1
             pplDict = lastNameFound(array,index)   # Checks for first name
             pplDict["suffix"] = array[index]  # Stores last name
 
-        peopleList.append(newPplDict)  # Adds person to list
+        peopleArray.append(newPplDict)  # Adds person to list
         # Remove other keywords associated with "expense"/"expence"
         removeKeywords(array, index)
 
@@ -343,38 +344,40 @@ def expenseFunction(array, peopleList, transReview, transDict):
             index+=1
             newPplDict = findName(array, index, transReview)  # Checks for name
             if newPplDict == 0:
-                newPplDict["Account"] = f"{array[index]} Expenses" # Saves Account Name
+                pplDict = peopleObject.copy
+                pplDict["Account"] = f"{array[index]} Expenses" # Saves Account Name    
+                peopleArray.append(pplDict)
             else:
-                peopleList.append(newPplDict)
-
-        # Checks if following word is "of" and saves folloiwing word as the item
-        if array[index] == "of":
+                peopleArray.append(newPplDict)
+        if array[index] == "of":   # Checks if following word is "of" and saves folloiwing word as the item
             array[index] == ""  # Removes "of"
             index+=1
             transDict["item"] = array[index]
-            transReview.append("Review Item")
-        
-        # Checks if first element of following string is a digit
-        if array[index][0].isdigit() == True:
+            transReview.append("Review Item")  # Checks if first element of following string is a digit
+        elif array[index][0].isdigit() == True:
                 QQI_function(array, index, transDict)  # Checks for QUANTITY, QUALIFIER, and ITEM
 
 # Function for "account" keyword
-def accountFunction(array, transReview):
+def accountFunction(array, transReview, peopleArray):
     index = array.index('account')  # Gets the array index for "account"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
     # Function to check preceeding words
     def helperFunction(index):
         if array[index - 1] in people_df["lastName"]:   # Checks if last name precedes word
-            index = index-1
-            peopleDict["lastName"] = array[index]  # Stores last name
-            lastNameFound(array,index)   # Checks for first name
+            pplDict = lastNameFound(array,index-1)   # Checks for first name
+            pplDict["lastName"] = array[index]  # Stores last name
+            peopleArray.append(pplDict)
         elif array[index - 1] in people_df["firstName"]:  # Checks if first name precedes word
-            peopleDict["firstName"] = array[index-1]
+            pplDict = peopleObject.copy()
+            pplDict["firstName"] = array[index-1]
             if index > 1 and array[index-2] in prefixList:   # Checks if prefix precedes first name
-                peopleDict["prefix"] = array[index-2]
+                pplDict["prefix"] = array[index-2]
+            peopleArray.append(pplDict)
         elif array[index-1] in professionList:   # Checks if a professsion precedes word
-                peopleDict["profession"] = array[index-1]
+                pplDict = peopleObject.copy()
+                pplDict["profession"] = array[index-1]
+                peopleArray.append(pplDict)
 
     # Checks words preceding "account"
     if index > 0:  # Prevents out of bounds index subtraction
@@ -386,23 +389,23 @@ def accountFunction(array, transReview):
             if index > 0:  # Prevents out of bounds index subtraction
                 helperFunction(index) #Checks for names and professions
         else:
-            peopleDict["account"] = array[index-1]  # Saves account
+            pplDict = peopleObject.copy()
+            pplDict["account"] = f"{array[index-1]} Account"  # Saves account
             transReview.append("Review Acount name. ")
+            peopleArray.append(pplDict)
 
     index+=1
     # Checks the following word
     if arrEnd >= 2 and array[index] == "of":  # Checks if "of" follows "account"
         array[index] == ""  # Removes "of"
         index+=1
-        if array[index] in people_df["firstName"]: # Checks if a first name follows "of"
-            findName(array, index)  # Checks for name
-        elif arrEnd >= 3 and array[index] in prefixList:   # Checks if prefix follows "of"
-            peopleDict["prefix"] = array[index]
-            index+=1
-            findName(array, index)  # Checks for name
+        if findName(array, index) != 0: # Checks for name
+            temp =findName(array, index)  
+            peopleArray.append(temp)
+
 
 # Function for "received" keyword
-def receivedFunction (array, placesArray, transReview,peopleArray):
+def receivedFunction (array,placesArray,transReview,peopleArray):
     index = array.index('received')   # Gets the array index for "charge"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -411,13 +414,14 @@ def receivedFunction (array, placesArray, transReview,peopleArray):
         if array[index] in ["per", "by"]:  # Checks if "per" or "by" follows
             if arrEnd > 2 and array[index+1] == "the":  # Checks if "the" follows
                 array[index+1] = ""  # Removes "the" keyword
-                if array[index+2] in professionList:
-                    peopleDict["profession"] = array[index+2]
+                pplDict = findName(array, index+2)
+                if pplDict != 0:
+                    peopleArray.append(pplDict)
                 else:
                     placesArray.append(array[index+2])  # Stores Place
                     transReview.append("Review places")
             elif arrEnd > 2 and array[index+1] in relationsList:
-                temp = findName(array,index)
+                temp = findName(array,index+2)
                 peopleArray.append(temp)
             elif array[index+1] in people_df["firstName"]:
                 temp = findName(array,index)
@@ -465,38 +469,34 @@ def byFunction(array, transReview,placesArray,peopleArray):
     if arrEnd > 0:  # Prevents out of bounds index increments
         index+=1 
         # Checks for proceeding pronouns
-        if index > 2 and array[index - 2] in ["her","him", "them", "us", "me", "you"]:  
+        if index > 2 and array[index - 2] in ["her","him", "them", "us", "me", "you", "his"]:  
             temp = findName(array, index)   # Looks for names
             peopleArray.append(temp)
             if index > 2 and array[index - 3] == "to":   # Checks for "to {pronoun}" pattern  
                 array[index - 2] = ""  # Removes "to"    
-        elif array[index] in people_df["firstName"]:
-            temp = findName(array, index)    # Checks for names
-            if temp["firstName"] != None:
-                peopleArray.append(temp)
+        elif findName(array, index) != 0:  # Checks for names following titles
+            temp = findName(array, index)
+            peopleArray.append(temp)
 
         if arrEnd > 1:  # Prevents out of bounds index increments
-            if array[index+1] in people_df["firstName"] or array[index+1] in people_df["lastName"]:
-                temp = findName(array, index)    # Checks for names following titles
-                if array[index] in prefixList:   # Checks for prefixes
-                    temp["prefix"] = array[index]
-                if array[index] in professionList:  # Checks for professions
-                    temp["profession"] = array[index]
-                if temp["firstName"] != None:
+            if findName(array, index+1) != 0:  # Checks for names following titles
+                temp = findName(array, index+1)
+                peopleArray.append(temp)
+            elif array[index] == "the":    # Checks if "the" follows
+                temp = findName(array, index+1)  # Checks for names and/or professions
+                if temp != 0:
                     peopleArray.append(temp)
-            elif array[index] == "the":    # Checks if "the" follows "by"
-                if array[index+1] not in professionList:  # Checks for "the {profession} pattern
-                    transReview.append("Review: Check Profession")
-                peopleDict["profession"] = array[index+1]
             else:
-                peopleDict["firstName"] = array[index]
+                pplDict = peopleObject.copy()
+                pplDict["firstName"] = array[index]
                 transReview.append("Review: Check person's name.")
 
 # Function for the pattern: for-SERVICE-{of}
-"""def forServiceFunction(array, idx, transDict):
+# *********** Not Completed *********** #
+def forServiceFunction(array, idx, transDict):
     arrEnd = len(array)-idx  # Saves distance between index and array end
 
-    transDict["Service"]"""
+    transDict["Service"]
 
 # Function for "for" keyword
 def forFunction(array, transDict, transReview, peopleArray):
