@@ -408,7 +408,7 @@ def accountFunction(array, transReview, peopleArray):
             findName(array, index)  # Checks for name
 
 # Function for "received" keyword
-def receivedFunction (array, placesArray, transReview,peopleArray):
+def receivedFunction (array,placesArray,transReview,peopleArray):
     index = array.index('received')   # Gets the array index for "charge"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -417,13 +417,14 @@ def receivedFunction (array, placesArray, transReview,peopleArray):
         if array[index] in ["per", "by"]:  # Checks if "per" or "by" follows
             if arrEnd > 2 and array[index+1] == "the":  # Checks if "the" follows
                 array[index+1] = ""  # Removes "the" keyword
-                if array[index+2] in professionList:
-                    peopleDict["profession"] = array[index+2]
+                pplDict = findName(array, index+2)
+                if pplDict != 0:
+                    peopleArray.append(pplDict)
                 else:
                     placesArray.append(array[index+2])  # Stores Place
                     transReview.append("Review places")
             elif arrEnd > 2 and array[index+1] in relationsList:
-                temp = findName(array,index)
+                temp = findName(array,index+2)
                 peopleArray.append(temp)
             elif array[index+1] in people_df["firstName"]:
                 temp = findName(array,index)
