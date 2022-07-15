@@ -303,7 +303,7 @@ def chargedFunction(array):
         findName(array, index)   # Searches for people
 
 # Function for "expense"/"expence" keyword
-def expenseFunction(array, peopleList, transReview, transDict): 
+def expenseFunction(array, peopleArray, transReview, transDict): 
     # Gets the array index for "expense"/"expence"
     if 'expence' in array:
         index = array.index('expence')
@@ -330,7 +330,7 @@ def expenseFunction(array, peopleList, transReview, transDict):
             pplDict = lastNameFound(array,index)   # Checks for first name
             pplDict["suffix"] = array[index]  # Stores last name
 
-        peopleList.append(newPplDict)  # Adds person to list
+        peopleArray.append(newPplDict)  # Adds person to list
         # Remove other keywords associated with "expense"/"expence"
         removeKeywords(array, index)
 
@@ -359,22 +359,26 @@ def expenseFunction(array, peopleList, transReview, transDict):
                 QQI_function(array, index, transDict)  # Checks for QUANTITY, QUALIFIER, and ITEM
 
 # Function for "account" keyword
-def accountFunction(array, transReview):
+def accountFunction(array, transReview, peopleArray):
     index = array.index('account')  # Gets the array index for "account"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
     # Function to check preceeding words
     def helperFunction(index):
         if array[index - 1] in people_df["lastName"]:   # Checks if last name precedes word
-            index = index-1
-            peopleDict["lastName"] = array[index]  # Stores last name
-            lastNameFound(array,index)   # Checks for first name
+            pplDict = lastNameFound(array,index-1)   # Checks for first name
+            pplDict["lastName"] = array[index]  # Stores last name
+            peopleArray.append(pplDict)
         elif array[index - 1] in people_df["firstName"]:  # Checks if first name precedes word
-            peopleDict["firstName"] = array[index-1]
+            pplDict = peopleObject.copy()
+            pplDict["firstName"] = array[index-1]
             if index > 1 and array[index-2] in prefixList:   # Checks if prefix precedes first name
-                peopleDict["prefix"] = array[index-2]
+                pplDict["prefix"] = array[index-2]
+            peopleArray.append(pplDict)
         elif array[index-1] in professionList:   # Checks if a professsion precedes word
-                peopleDict["profession"] = array[index-1]
+                pplDict = peopleObject.copy()
+                pplDict["profession"] = array[index-1]
+                peopleArray.append(pplDict)
 
     # Checks words preceding "account"
     if index > 0:  # Prevents out of bounds index subtraction
@@ -386,8 +390,10 @@ def accountFunction(array, transReview):
             if index > 0:  # Prevents out of bounds index subtraction
                 helperFunction(index) #Checks for names and professions
         else:
-            peopleDict["account"] = array[index-1]  # Saves account
+            pplDict = peopleObject.copy()
+            pplDict["account"] = array[index-1]  # Saves account
             transReview.append("Review Acount name. ")
+            peopleArray.append(pplDict)
 
     index+=1
     # Checks the following word
