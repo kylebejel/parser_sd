@@ -85,7 +85,7 @@ def preprocess(text):
         tokens[count] = tokens[count].replace(fraction, fracReplace[idx])
 
 
-  return tokens  
+  return tokens
 
 breakup = seperate(string)#replace string here with variable or string to be handeled
 preprocessed = []
