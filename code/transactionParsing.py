@@ -29,7 +29,6 @@ people_df = pd.DataFrame(db["people"].find())
 item_df = pd.DataFrame(db["ITEMS"].find())
 places_df = pd.DataFrame(db["places"].find())
 
-
 # Creating lists
 qualifierList = qualifier_df['word'].to_numpy()  # Creates an array of current Qualifiers
 itemList = item_df['name'].to_numpy()  # Creates an array of current Items
@@ -166,7 +165,7 @@ def QQI_function(array, idx, transDict):
             transDict["totalCost"] = array[index]
 
 # QUALIFIER-{ADJECTIVE}* -ITEM-TOTAL PRICE pattern
-def QAITTP_function(array, idx, transDict):
+def QAITTP_function(array, idx, transDict, varientsArray):
     transDict["qualifier"] = array[idx]  # Stores qualifier
     arrEnd = len(array)-idx  # Saves distance between index and array end
 
@@ -213,7 +212,7 @@ def removeKeywords(array, idx):
             array[idx+1] = ""
 
 # Function for "per" keyword
-def perFunction(array, transReview, peopleList):  
+def perFunction(array, transReview, peopleArray, placesArray):  
     index = array.index('per')  # Gets the array index of "per"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -242,7 +241,7 @@ def perFunction(array, transReview, peopleList):
             pplDict = findName(array, index)
             
     if pplDict != 0:   # Checks if person was found
-        peopleList.appand(pplDict)   # Stores name
+        peopleArray.appand(pplDict)   # Stores name
 
 # Function for "balance" keyword
 def balanceFunction(array, transDict):
@@ -265,7 +264,7 @@ def balanceFunction(array, transDict):
         transDict["item"] = "balance from"
 
 # Function for "charge" keyword
-def chargeFunction(array, transDict):
+def chargeFunction(array, transDict, transReview):
     index = array.index('charge')   # Gets the array index for "charge"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -360,7 +359,7 @@ def expenseFunction(array, peopleList, transReview, transDict):
                 QQI_function(array, index, transDict)  # Checks for QUANTITY, QUALIFIER, and ITEM
 
 # Function for "account" keyword
-def accountFunction(array):
+def accountFunction(array, transReview):
     index = array.index('account')  # Gets the array index for "account"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -403,7 +402,7 @@ def accountFunction(array):
             findName(array, index)  # Checks for name
 
 # Function for "received" keyword
-def receivedFunction (array):
+def receivedFunction (array, placesArray, transReview,peopleArray):
     index = array.index('received')   # Gets the array index for "charge"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -428,7 +427,7 @@ def receivedFunction (array):
             array[index] = ""  # Removes "per" keyword
 
 # Function for "value" keyword
-def valueFunction(array):
+def valueFunction(array, transReview,transDict):
     index = array.index('value')  # Gets the array index for "value"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -442,7 +441,7 @@ def valueFunction(array):
         index+=1
         if lem.lemmatize(array[index]) not in itemList:  # Checks if word is NOT an item
             transReview.append("Review item.")
-            transactionDict["item"] = f"Value of {array[index]}"
+            transDict["item"] = f"Value of {array[index]}"
 
 # Function for "returned" keyword
 def returnedFunction(array,transDict):
@@ -450,7 +449,7 @@ def returnedFunction(array,transDict):
         transDict["service"] = "returned"
 
 # Function for "by" keyword
-def byFunction(array):
+def byFunction(array, transReview,placesArray,peopleArray):
     index = array.index('by')  # Gets the array index for "by"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -494,13 +493,13 @@ def byFunction(array):
                 transReview.append("Review: Check person's name.")
 
 # Function for the pattern: for-SERVICE-{of}
-def forServiceFunction(array, idx, transDict):
+"""def forServiceFunction(array, idx, transDict):
     arrEnd = len(array)-idx  # Saves distance between index and array end
 
-    transDict["Service"]
+    transDict["Service"]"""
 
 # Function for "for" keyword
-def forFunction(array, transDict, transReview):
+def forFunction(array, transDict, transReview, peopleArray):
     index = array.index('for')  # Gets the array index for "for"
     arrEnd = len(array)-index  # Saves distance between index and array end
 
@@ -538,7 +537,7 @@ def forFunction(array, transDict, transReview):
             peopleArray.append(person)
 
 # Function for PERSON - "for" pattern
-def peopleForFunction (array, transDict):
+def peopleForFunction (array, transDict, transReview):
     index = array.index('for')  # Gets the array index for "for"
     arrEnd = len(array)-index  # Saves distance between index and array end
     array[index] = "for"   # Removes "for"
