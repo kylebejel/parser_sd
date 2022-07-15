@@ -11,7 +11,7 @@ def seperate(text):
   return textArray
 
 #creat function to preprocess ALREADY SEPEARTED ENTRIES with nlkt
-def preprocess(text):
+def editTokens(text):
   #create variable tokens which is tokenized string
   tokens = nltk.word_tokenize(text)
   #begin process of removing words that are replacements
@@ -121,7 +121,7 @@ def preprocess(string):#function that is acctually called
   breakup = seperate(string)
   preprocessed = []
   for count in range(0, len(breakup)):
-    preprocessed.append(preprocess(breakup[count]))
+    preprocessed.append(editTokens(breakup[count]))
   while [] in preprocessed:
     preprocessed.remove([])
   return preprocessed
