@@ -117,8 +117,8 @@ def preprocess(text):
   return tokens
 
 
-def preprocess(string):
-  breakup = seperate(string)#replace string here with variable or string to be handeled
+def preprocess(string):#function that is acctually called
+  breakup = seperate(string)
   preprocessed = []
   for count in range(0, len(breakup)):
     preprocessed.append(preprocess(breakup[count]))
