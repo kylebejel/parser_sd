@@ -80,7 +80,7 @@ def preprocess(text):
   for count in range(0,len(tokens)):
     fractions = ["¼", "½", "¾", "⅓", "⅔", "⅕", "⅖", "⅗", "⅘", "⅙", "⅚", "⅛", "⅜", "⅝", "⅞"]
     fracReplace = [".25", ".5", ".75", ".333", ".667", ".2", ".4", ".6", ".8", ".167", ".833", ".125", ".375", ".625", ".875"]
-    for idx, fraction in fractions:
+    for idx, fraction in enumerate(fractions):
       while fraction in word:
         tokens[count] = tokens[count].replace(fraction, fracReplace[idx])
 
