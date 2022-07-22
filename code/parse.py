@@ -1,7 +1,13 @@
 # code for the function that parses everything
-def parse():
+def parse(filepath):
     #Load spreadsheet into pd dataframe
+    data = pd.read_excel("C_1760_003_FINAL_.xlsx", header=1)
+    
     #delete rows that need to be deleted from spreadsheet
+    for idx in range(0, data.shape[0]-1):
+        if str(data['[EntryID]'][idx+1])[:-1] == str(data['[EntryID]'][idx]):
+    data = data.reset_index(drop=True)
+
     #create new dataframe that will contain parsed info
     #put all direct transfer information from original sheet into 'parsed' sheet
     #for rows in entry column:
