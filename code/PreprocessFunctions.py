@@ -22,7 +22,7 @@ def editTokens(text):
     if (word == '[' and tokens[idx+2] == ']' and (tokens[idx-1][0] == tokens[idx+1][0] or tokens[idx-1]=="ditto" or tokens[idx-1]=="Ditto")):
       replaceWordIndex.append(idx) #replace words based on matching first letter
     elif (word == '['):#remove numbers in brackets
-      if (tokens[idx+1][0] == '1' or tokens[idx+1][0] == '2' or tokens[idx+1][0] == '3' or tokens[idx+1][0] == '4' or tokens[idx+1][0] == '5' or tokens[idx+1][0] == '6' or tokens[idx+1][0] == '7' or tokens[idx+1][0] == '8' or tokens[idx+1][0] == '9'):
+      if (tokens[idx-1] != '..' and tokens[idx+3] != '..'):
         removenumbersIndex.append(idx)
   for num in removenumbersIndex:#pop the numbers
     tokens.pop(num+1)
@@ -88,7 +88,6 @@ def editTokens(text):
   decimalRE = re.compile("\.[0-9]+")
   for idx, word in enumerate(tokens):
     if (numberRE.match(tokens[idx]) and idx+1 < len(tokens)):
-      print("match" + str(idx))
       if (decimalRE.match(tokens[idx+1])):
         tokens[idx] = tokens[idx] + tokens[idx+1]
         tokens.pop(idx+1)
