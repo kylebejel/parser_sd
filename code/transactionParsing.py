@@ -29,18 +29,46 @@ people_df = pd.DataFrame(db["people"].find())
 item_df = pd.DataFrame(db["ITEMS"].find())
 places_df = pd.DataFrame(db["places"].find())
 
+# Creating Lists From Database Data
+# Gets List Of Prefixes
+pf = np.array(people_df["prefix"])
+pf = pf[pf!=""]
+prefixList = np.unique(pf)
+# Gets List Of  First Names
+fn = np.array(people_df["firstName"])
+fn = fn[fn!=""]
+firstNameList = np.unique(fn)
+# Gets List Of Last Names
+ln = np.array(people_df["lastName"])
+ln = ln[ln!=""]
+lastNameList = np.unique(ln)
+# Gets List of Suffixes
+sx = np.array(people_df["suffix"])
+sx = sx[sx!=""]
+suffixList = np.unique(sx)
+# Gets List of Professions
+pf = np.array(people_df["profession"])
+pf = pf[pf!=""]
+professionList = np.unique(pf)
+# Gets List of Places
+placesList = np.array(places_df["location"])
+# Gets List of Place Aliases
+placeAliasList = places_df[places_df.alias != '']
+placeAliasList = placeAliasList.drop(['_id', "descriptor"], axis=1)
+placeAliasList
+# Gets List of Items
+it = np.array(places_df["items"])
+it = it[it!=""]
+itemList = np.unique(it)   # *** ADD "premium of insurance" to item list
+
 # Creating lists
-qualifierList = ["bottle", "cask", "pair", "yard"]      # qualifier_df['word'].to_numpy()  # Creates an array of current Qualifiers
-itemList = ["balsam", "rum", "breeches", "velvet"]      # item_df['name'].to_numpy()  # Creates an array of current Items
-professionList = people_df['Profession'].to_numpy() # Creates an array of current profofessions
-relationsList = ["mother", "father", "son", "sons", "daughter", "daughters","brother", "brothers", "sister", "sisters", "slave", 
-                   "slaves", "boy", "girl", "boys", "girls", "wench", "lady", "negro", "negroes"]
+qualifierList = ["bottle","cask","pair","yard","foot", "feet","firkin",]   
+relationsList = ["mother","father","son","daughter","brother","sister","slave","boy","girl", 
+                "wench","lady","negro","negroes","uncle", "aunt"]
 keywordList = ["of", "by", "for", "the", "from", "to", "by"]
-prefixList = ["Mr", "Mr.", "Mrs", "Mrs.", "Ms", "Ms.", "Miss", "Miss."]
-suffixList = ["jr", "sr.", "esquire"]
 possessiveList = ["your", "his", "her", "my", "their", "our"]
-servicesList = ["making", "mending", "postage", "waggonage", "freight"]
-placesList = None
+servicesList = ["making", "mending", "postage", "waggonage", "freight","inspection","pasturage","ferriage","Craft hire"]
+itemQualList = ["bottle", "cask", "suit"]  # List of ITEMS that are also QUALIFIERS
 
 # Initializing dictionaries
 peopleObject ={"prefix": "", "firstName": "", "lastName": "", "suffix": "", "profession": "", "loacation": "", 
@@ -68,46 +96,133 @@ def intFirstParse(array,transDict,otherItems,peopleArray,placesArray,varientsArr
 # Functon for parsing entries begining with an letter
 def alphaFirstParse(array,transDict,otherItems,peopleArray,placesArray,varientsArray,transReview):
     # sourcery skip: merge-duplicate-blocks, merge-nested-ifs, remove-redundant-if
-    arrLength = len(array)-1    # Saves array length
-
+    idx = 0
     # index +1 is just a place holder
-    if fuzz.ratio(lem.lemmatize(array[0]), "charge") >= 90 and arrLength >= 2:
+    if fuzz.ratio(lem.lemmatize(array[0]), "charge") >= 90:
         beginsChargeFunction(array, transDict, transReview)
-    if fuzz.ratio(lem.lemmatize(array[0]), "allowance ") >= 90 and arrLength >= 2:
+    elif fuzz.ratio(array[0], "allowance ") >= 87 or fuzz.ratio(array[1], "allowance ") >= 87:
+        beginsAllowance(array, transDict, transReview) 
+    elif array[idx] == "cash":
+        pass
+    elif array[idx] == "total":
+        totalFunction(array, transDict, transReview) 
+        pass
+    elif array[idx] in ["subtotal" "sum"]:
         pass 
-    if array[0] == "cash" and arrLength >= 2:
+    elif idx+1 < len(array) and (process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing"):
+        beginsServiceFunction(array, idx, transDict, transReview)
+    elif getPlace(array,idx,placesArray) != 0:
         pass
-    if array[0] in ["total", "subtotal" "sum"]:
+    elif findName(array, 0) != 0:
+        name = findName(array, idx)
+        peopleArray.append(name[0])
+        idx = name[1]
         pass
-    if array[0] in servicesList and arrLength >= 2:
+    elif array[idx] == "sterling":
         pass
-    if array[0] in placesList and arrLength >= 2:
+    elif fuzz.ratio(lem.lemmatize(array[idx]), "currency") >= 90:
         pass
-    if findName(array, 0) != 0:
+    elif fuzz.ratio(lem.lemmatize(array[idx]), "expence") >= 85:
         pass
-    if array[0] == "sterling" and arrLength >= 2:
+    elif fuzz.ratio(lem.lemmatize(array[idx+1]), "expence") >= 85:
         pass
-    if fuzz.ratio(lem.lemmatize(array[0]), "currency") >= 90 and arrLength >= 2:
+    elif array[idx] == "account":
         pass
-    if fuzz.ratio(lem.lemmatize(array[0]), "expence") >= 85 and arrLength >= 2:
+    elif array[idx] == "contra":
         pass
-    if fuzz.ratio(lem.lemmatize(array[1]), "expence") >= 85 and arrLength >= 2:
+    elif array[idx] in ["sundries", "sundry", "sundrys"]:
         pass
-    if array[0] == "account" and arrLength >= 2:
+    elif fuzz.ratio(lem.lemmatize(array[idx]), "ballance") >= 90:
         pass
-    if array[0] == "contra" and arrLength >= 2:
-        pass
-    if array[0] in ["sundries", "sundry", "sundrys"]:
-        pass
-    if fuzz.ratio(lem.lemmatize(array[0]), "ballance") >= 90 and arrLength >= 2:
-        pass
-    if array[0] in ["the", "a"] and arrLength >= 2:
-        if array[0] == "contra" and arrLength >= 2:
+    elif array[0] in ["the", "a"] :
+        if array[0] == "contra":
             pass
-        if fuzz.ratio(lem.lemmatize(array[0]), "ballance") >= 90 and arrLength >= 2:
+        if fuzz.ratio(lem.lemmatize(array[0]), "ballance") >= 90 :
             pass
-        elif array[0] in professionList and arrLength >= 2:
+        elif array[0] in professionList:
             pass
+    elif any(word in '& and with' for word in array) == False and (array[-1][0].isdigit()==True or array[-1] in ["order"]):
+        reverseParse(array,idx,transDict,transReview)
+    else:
+         # ******* Run all keyword functions ******* #
+        
+        transReview.append("Error: Transaction in unrecognizeable pattern.")
+
+# Function for getting the total/unit cost and converting it to pound-shilling-pence
+def getCostFunction(array,index,transDict):  # sourcery skip: low-code-quality
+    money = moneyObject.copy()  # Creates new money dictionary
+    atFlag = None  # Flag for UNIT COST
+
+    # Checks if "at" precedes the price
+    if index<len(array) and array[index] == "at":  
+        index+=1 
+        atFlag = True
+    # Checks for index range and if element is a digit
+    if index > len(array) or array[index][0].isdigit()==False:  
+        return 0
+
+    price = nltk.word_tokenize(array[index])   # Tokenizes the string
+    if len(price) == 1 and "/" in price[0]:   # Checks for "2/1" price pattern
+        price = price[0].split("/")
+        money["pounds"] = "0"
+        money["shillings"] = price[0]
+        money["pence"] = "0" if price[1] == ":" else price[1]
+    elif len(price) == 1 and price[0].isalnum() == True and price[0][-1] in ["d","D"]:     # Checks for "6d" price pattern
+        p = price[0].replace(price[0][-1],"")  # Removes the "d"
+        money["pounds"] = "0"
+        money["shillings"] = "0"
+        money["pence"] = p
+    elif len(price) > 4 and price[1] == ".." and price[3] == "..":  # Checks for "83..6..2" pattern
+        money["pounds"] = price[0]
+        money["shillings"] = price[2]
+        money["pence"] = price[4]
+    elif len(price) > 4 and "..." in price:  # Checks for decmial numbers 
+        for i, element in enumerate(price):
+            if element == "..." and  i+1 < len(price):
+                x=price[i+1]
+                print(price[i+1])
+                price[i+1] = f"0.{x}"
+        money["pounds"] = price[0]
+        money["shillings"] = price[2]
+        money["pence"] = price[4]
+    elif len(price) == 1 and price[0].isdigit()==True:
+        money["pounds"] = "0"
+        money["shillings"] = "0"
+        money["pence"] = price[0]
+
+    if money["pence"] == "":
+        return 0  # Returns 0 if price not found
+    if index+2 < len(array) and array[index+1] == "per" and array[index+2] == "order":  # Checks if "per order" follows price
+        print(array[index+1])
+        transDict["unitPrice"] = money  # Saves price as unit price
+        array[index+1] == ""   # Removes "per" keyword
+        if len(array) > 0 and array[index-1] == "at":
+            array[index-1] == ""   # Removes "at" keyword
+    elif atFlag == True:
+        transDict["unitPrice"] = money  # Saves price as unit price
+    else:
+        transDict["totalPrice"] = money  # Saves pric as Total price
+    return 1  # Returns 1 if price found
+
+# Function to get names of places
+def getPlace(array,idx,placesArray):
+    # Serches for place
+    if process.extractBests(array[idx], placesList, scorer=fuzz.token_set_ratio, score_cutoff=80):
+        place = process.extractBests(array[idx], placesList, scorer=fuzz.token_set_ratio, score_cutoff=80)[0][0]
+        placesArray.append(place)
+        i = len(place.split())
+        idx = idx+i
+        return idx
+    # Searches for place alias and maps it to the real/full name
+    elif process.extractBests(array[idx], placeAliasList["alias"], scorer=fuzz.token_set_ratio, score_cutoff=80):
+        pl = process.extractBests(array[idx], placeAliasList["alias"], scorer=fuzz.token_set_ratio, score_cutoff=80)[0][0]
+        n = placeAliasList.index[placeAliasList['alias']==pl].tolist()
+        realName = placeAliasList['location'].loc[n[0]]
+        placesArray.append(realName)
+        i = len(realName.split())
+        idx = idx+i
+        return idx
+    return 0
 
 # Functon to find name and professions, and preceding/following prefixes/suffixes
 def findName(array, idx):
@@ -115,58 +230,66 @@ def findName(array, idx):
 
     # Helper function to search for profession
     def professionFinder():  # n = need distance from end of array
-        if newPplDict["profession"] != "":
-            return
         if process.extractBests(array[idx], professionList, scorer=tsr, score_cutoff=95):
             match = process.extractBests(array[idx], professionList, scorer=tsr, score_cutoff=95)
             newPplDict["profession"] = match[0][0]
-                
+            idx = idx + len(newPplDict["profession"].split())   # If profession is found, increments "i" by length of profession name
+            
+    # Checks for preceeding professions     
     professionFinder()
-    # If profession is found, increments "i" by length of profession name
-    if newPplDict["profession"] != "":  
-        idx = idx + len(newPplDict["profession"].split()) 
 
     # Checks for prefixes
-    if array[idx] in prefixList and len(array) > idx+1:
+    if idx < len(array) and array[idx] in prefixList:
         newPplDict["prefix"] = array[idx]
         idx+=1
 
     # Checks if first name is in database
-    if array[idx] in people_df["firstName"]:
-        newPplDict["firstName"] = array[idx]
-        #Checks for last name
-        newPplDict["lastName"] = array[idx+1] if len(array) > idx+1 and array[idx+1] in people_df["lastName"] else "LNU"
-        # Checks for suffix 
-        if len(array) > idx+2 and array[idx+2] in suffixList:  
-            newPplDict["suffix"] = array[idx+2]
-            if idx+3 < len(array): 
-                idx+=3
-                professionFinder()
+    while idx < len(array):
+        # Checks if first name is in database
+        if process.extractBests(array[idx], firstNameList, scorer=tsr, score_cutoff=90):
+            fName = process.extractBests(array[idx], firstNameList, scorer=tsr, score_cutoff=90)
+            newPplDict["firstName"] = fName[0][0]
+            idx = idx + len(fName[0][0].split())
+            if process.extractBests(array[idx], lastNameList, scorer=tsr, score_cutoff=90):   #Checks for last name
+                newPplDict["lastName"] = array[idx]  
+                idx+=1
+                if array[idx] in suffixList:  # Checks for suffixes 
+                    newPplDict["suffix"] = array[idx]
+                    idx+=1
+                    professionFinder() # Checks for following professions
+            else: 
+                newPplDict["lastName"] = "LNU"
+            # Checks for suffixes following first name
+            if array[idx] in suffixList:  
+                newPplDict["suffix"] = array[idx]
+                idx+=1
+                professionFinder()   # Checks for following professions
+        elif process.extractBests(array[idx], lastNameList, scorer=tsr, score_cutoff=90):  # Checks if name is a last name
+            lName = process.extractBests(array[idx], lastNameList, scorer=tsr, score_cutoff=90)
+            newPplDict["firstName"] = "FNU"
+            newPplDict["lastName"] = lName[0][0]
+            idx = idx + len(lName[0][0].split())
+            if array[idx] in suffixList:  # Checks for suffix 
+                newPplDict["suffix"] = array[idx]
+                idx+=1
+                professionFinder()  # Checks for following professions
+        # Checks is any person found
+        if newPplDict == peopleObject:
+            return 0  # Returns zero if no names found
         else:
-            idx+2
-            professionFinder()
-    elif array[idx] in people_df["lastName"]:  # Checks if name is a last name
-        newPplDict["firstName"] = "FNU"
-        newPplDict["lastName"] = array[idx]
-        # Checks for suffix 
-        if len(array) > idx+1 and array[idx+1] in suffixList:  
-            newPplDict["suffix"] = array[idx+1]
-            idx+2
-            professionFinder()
-        else:
-            idx+1
-            professionFinder(0)
-    elif newPplDict["prefix"] == "" and newPplDict["profession"] == "":
-        return 0  # Returns zero if no names found
-    return newPplDict
+            break
+
+    return [newPplDict, idx]
 
 # Function to look for first name or prefix if last name is found
 def lastNameFound(array,idx):
     newPplDict = peopleObject.copy()   # Initializes new people dictionary
     newPplDict["lastName"] = array[idx]  # Stores last name
     if idx > 0: 
-        if array[idx - 1] in people_df["firstName"]: # Checks if first name precedes last name
-            newPplDict["firstName"] = array[idx-1]
+        if process.extractBests(array[idx-1], firstNameList, scorer=tsr, score_cutoff=90):
+            fName = process.extractBests(array[idx-1], firstNameList, scorer=tsr, score_cutoff=90)
+            newPplDict["firstName"] = fName[0][0]
+            idx = idx + len(fName[0][0].split())
             if idx > 1 and array[idx - 2] in prefixList:   # Checks if prefix precedes first name
                 newPplDict["prefix"] = array[idx-2]
         elif array[idx - 1] in prefixList:   # Checks if prefix precedes last name
@@ -175,67 +298,181 @@ def lastNameFound(array,idx):
             newPplDict["firstName"] = "FNU"   
     return newPplDict
 
-# Function for finding storing price
-def priceFinder(idx, array, transDict):
-    if idx < len(array) and array[idx][0].isdigit() == True:   # Checks for TOTAL PRICE
-            transDict["totalPrice"] = array[idx+1]
+def serviceOfFunction(array, idx, transDict, peopleArray, transReview, placesArray):# sourcery skip: low-code-quality
+
+    if lem.lemmatize(array[idx-2]) == "rent": # Checks if service is "rent"
+        if process.extractBests(array[idx], placesList, scorer=tsr, score_cutoff=90):
+            place = process.extractBests(array[idx], placesList, scorer=tsr, score_cutoff=90)
+            placesArray.append(place[0][0])
+        else:
+            placesArray.append(array[idx])
+            transReview.append("Review: Confirm PLACE name.")
+    elif idx < len(array) and array[idx] in possessiveList:  # checks for relations
+        idx+=1
+        # Checks for relation
+        if process.extractBests(lem.lemmatize(array[idx]), relationsList, scorer=tsr, score_cutoff=95):
+            relation = lem.lemmatize(array[idx])
+            temp = None
+            idx+=1
+            # Checks for names
+            if idx < len(array) and findName(array, idx, transDict) !=0:  
+                temp = findName(array, idx, transDict)
+                temp[0]["relations"] = relation
+                peopleArray.append(temp[0])
+                i = len(temp[0].split())
+                idx += i
+            # Saves unkown person if no name found
+            if temp is None:
+                person = peopleObject.copy()
+                person["relations"] = relation
+                person["firstName"] = "FNU"
+                person["lastName"] = "LNU"
+                peopleArray.append(person)
+            # Checks for Item
+            if idx < len(array) and process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95):
+                item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95)
+                transDict["item"] = item[0][0]
+                i = len(item[0][0].split())
+                idx += i
+            else: # Saves unknown ITEM
+                transDict["item"] = array[idx]
+                transReview.append("Review: Confirm ITEM.")
+                idx+=1
+            getCostFunction(array,idx,transDict)
+    elif idx+1 < len(array) and array[idx] in ["a", "an"]:  # Checks for SERVICE-of-a pattern
+        idx+=1
+        if lem.lemmatize(array[idx-3]) == "rent":  # Checks if service is "rent"
+            if process.extractBests(array[idx], placesList, scorer=tsr, score_cutoff=90):
+                place = process.extractBests(array[idx], placesList, scorer=tsr, score_cutoff=90)
+                placesArray.append(place[0][0])
+            else:
+                placesArray.append(array[idx])
+                transReview.append("Review: Confirm PLACE name.")
+        elif array[idx][0].isdigit() == True: # Checks if next value is a digit
+            QQI_function(array, idx, transDict, transReview)  # Checks for QUANTITY-QUALIFIER-ITEM pattern
+        elif process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=90):  # Checks if known ITEM
+            item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=90)
+            transDict["item"] = item[0][0]
+            i = len(item[0][0].split())
+            idx += i
+            getCostFunction(array,idx,transDict)
+        else:
+            transDict["item"] = array[idx] # Assumes word is unknown ITEM
+            transReview.append("Review: Confirm ITEM.")
     else:
-        return 0
+        findName(array, idx, transDict)
 
 # Function for QUANTITY-QUALIFIER-ITEM pattern
-# *********** Needed: ADD "of" check after QUALIFIER *********** #
-# *********** Needed: ADD QUANTITY-QUALIFIER-SERVICE Check *********** #
-def QQI_function(array, idx, transDict):
+def QQI_function(array, idx, transDict, transReview):
+    if idx+1 >= len(array):
+        return
+
+    # Helper function for retreiving ITEMS
+    def getItemFunction():
+        item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95)
+        transDict["item"] = item[0][0]
+        i = len(item[0][0].split())
+        idx = idx + i
+        getCostFunction(array,idx,transDict)
+
     transDict["quantity"] = array[idx]  # Stores number as QUANTITY
     idx+=1
-
-    if lem.lemmatize(array[idx]) in qualifierList:  # Checks for QUALIFIER
-        transDict["qualifier"] = array[idx]
-        # Checks for item
-        if idx+1 < len(array) and process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95):
-            item = process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95)[0][0]
-            transDict["item"] = item
-            i = len(item.split())+1
-            if idx+i < len(array) and array[idx+i][0].isdigit()==True:
-                transDict["totalCost"] = array[idx+i]
+    
+    if lem.lemmatize(array[idx]) in itemQualList:   # Checks for items that are also qualifiers
+         # Checks for QUALIFIER-of-ITEM pattern 
+        if idx+2 < len(array) and array[idx+1] == "of" and process.extractBests(lem.lemmatize(array[idx+2]), itemList, scorer=tsr, score_cutoff=95):
+            transDict["qualifier"] = array[idx]
+            idx+=2
+            getItemFunction()
+         # Checks if following word is an ITEM
+        elif idx+1 < len(array) and process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95):
+            idx+1
+            getItemFunction()
+        else:
+            if idx+2 < len(array):
+                findAdjectives(array, idx, transDict)  # Checks for ADJECTIVES
+            else:
+                transDict["item"] = array[idx]   # Saves word as an ITEM if no ADJECTIVES found
+                idx+1
+                getCostFunction(array,idx,transDict)
+    elif idx+1 < len(array) and lem.lemmatize(array[idx]) in qualifierList:  # Checks for QUALIFIER
+        transDict["qualifier"] = array[idx]  # Saves qualifier
+        idx+=1
+        # Checks for QUALIFIER-of-ITEM pattern 
+        if idx+1 < len(array) and array[idx] == "of" and process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95):
+            idx+=1
+            getItemFunction()
+        elif process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing":    # Checks for known services
+            transDict["service"] = array[idx]
+            if idx+2 < len(array) and array[idx+1] == "of":  # Checks if "of" follows SERVICE
+                idx+2
+                serviceOfFunction(array, idx, transDict)
+        elif array[idx] not in servicesList and idx+1 < len(array) and array[idx+1] == "of":  # Accounts for unknown services
+            transDict["service"] = array[idx]
+            transReview.append("Review: Confirm SERVICE")
+            if idx+2 < len(array) and array[idx+1] == "of":
+                idx+2
+                serviceOfFunction(array, idx, transDict)
+        elif process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95):   # Checks for ITEM
+            getItemFunction()
+        else:     # Checks ADJECTIVES preceding the ITEM
+            findAdjectives(array, idx, transDict)
     elif process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):  # Checks for ITEM if no QUALIFIER found
-        item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item
-        i = len(item.split())
-        if idx+i < len(array) and array[idx+i][0].isdigit()==True:
-            transDict["totalCost"] = array[idx+i]
+        getItemFunction()
     elif idx+1 < len(array):     # Checks ADJECTIVES preceding the ITEM
         findAdjectives(array, idx, transDict)
 
 # QUALIFIER-{ADJECTIVE}* -ITEM-TOTAL PRICE pattern
-def QAITTP_function(array, idx, transDict):
-    transDict["qualifier"] = array[idx]  # Stores qualifier
-
-    # Checks for ITEM
-    if idx+1 < len(array) and process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95):
-        item = process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item
-        i= len(item.split())+1
-        if idx+i < len(array) and array[idx+i][0].isdigit() == True:
-            transDict["totalCost"] = array[idx+i]
-    # Checks for 1 adjective then item
-    elif idx+2 < len(array) and process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95):
-        item = process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item
-        varientsArray = [array[idx+1]]
-        transDict["varient"] = varientsArray
-        i= len(item.split())+2  
-        if idx+i < len(array) and array[idx+i][0].isdigit() == True:
-            transDict["totalCost"] = array[idx+i]
-    # Checks for 2 adjectives then item
-    elif idx+3 < len(array) and process.extractBests(array[idx+3], itemList, scorer=tsr, score_cutoff=95):
-        item = process.extractBests(array[idx+3], itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item 
-        varientsArray = [array[idx+1], array[idx+2]]
-        transDict["varient"] = varientsArray
-        i = len(item.split())+3
-        if idx+i < len(array) and array[idx+i][0].isdigit() == True:
-            transDict["totalCost"] = array[idx+i]
+def QAITTP_function(array, idx, transDict, transReview):
+    
+    # Helper function for retreiving ITEMS
+    def getItemFunction():
+        item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95)
+        transDict["item"] = item[0][0]
+        i = len(item[0][0].split())
+        idx = idx + i
+        getCostFunction(array,idx,transDict)
+    
+    if lem.lemmatize(array[idx]) in itemQualList:   # Checks for items that are also qualifiers
+         # Checks for QUALIFIER-of-ITEM pattern 
+        if idx+2 < len(array) and array[idx+1] == "of" and process.extractBests(lem.lemmatize(array[idx+2]), itemList, scorer=tsr, score_cutoff=95):
+            transDict["qualifier"] = array[idx]
+            idx+=2
+            getItemFunction()
+         # Checks if following word is an ITEM
+        elif idx+1 < len(array) and process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95):
+            idx+1
+            getItemFunction()
+        else:
+            if idx+2 < len(array):
+                findAdjectives(array, idx, transDict)  # Checks for ADJECTIVES
+            else:
+                transDict["item"] = array[idx]   # Saves word as an ITEM if no ADJECTIVES found
+                idx+1
+                getCostFunction(array,idx,transDict)
+    elif idx+1 < len(array): # Stores for QUALIFIER
+        transDict["qualifier"] = array[idx]  # Saves qualifier
+        idx+=1
+        # Checks for QUALIFIER-of-ITEM pattern 
+        if idx+1 < len(array) and array[idx] == "of" and process.extractBests(lem.lemmatize(array[idx+1]), itemList, scorer=tsr, score_cutoff=95):
+            idx+=1
+            getItemFunction()
+        # Checks for SERVICES
+        elif process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=90)==True or lem.lemmatize(array[idx])[-3:]== "ing":    
+            transDict["service"] = array[idx]
+            if idx+1 < len(array) and array[idx+1] == "of":  # Checks if "of" follows SERVICE
+                idx+1
+                serviceOfFunction(array, idx, transDict)
+        elif array[idx] not in servicesList and idx+1 < len(array) and array[idx+1] == "of":  # Accounts for unknown services
+            transDict["service"] = array[idx]
+            transReview.append("Review: Confirm SERVICE")
+            if idx+1 < len(array) and array[idx+1] == "of":
+                idx+1
+                serviceOfFunction(array, idx, transDict)
+        elif process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95):   # Checks for ITEM
+            getItemFunction()
+        else:     # Checks ADJECTIVES preceding the ITEM
+            findAdjectives(array, idx, transDict)
 
 # Function to remove associated keywords
 def removeKeywords(array, idx):
@@ -253,8 +490,109 @@ def removeKeywords(array, idx):
         if arrEnd > 0 and array[idx + 1] in ["of", "on"]:
             array[idx+1] = ""
 
+# Function to find prices and ITEMS starting from end of the string
+def reverseParse(array,transDict,transReview, varientsArray):
+    idx = len(array)-1
+
+    # Helper Function to account for ADJECTIVES
+    def getAdjs():
+        transDict["qualifier"] = array[idx]
+        idx = idx-1
+        if idx>0 and array[idx][0].isdigit() == True and array[idx].isalnum() == False: # Checks for QUANTITY
+            transDict["quantity"] = array[idx]
+            if idx>0 and array[0] == "of":  # Checks if "of" precedes/Accounts for SERVICE-of pattern
+                idx = idx-1
+                # Checks for SERVICES
+                if idx>0 and (process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing"):  
+                    transDict["service"] = array[idx]
+                else:
+                    transDict["service"] = array[idx]
+                    transReview.append("REVIEW: Confirm Service")
+
+    # Helper Function to account for SERVICES
+    def servicesHelper():
+        if idx>0 and process.extractBests(lem.lemmatize(array[idx]),servicesList,scorer=tsr,score_cutoff=90) or lem.lemmatize(array[idx])[-3:]=="ing": 
+            transDict["service"] = array[idx]
+        elif idx > 1 and array[idx] == "of" and process.extractBests(lem.lemmatize(array[idx-1]),servicesList,scorer=tsr,score_cutoff=90) or lem.lemmatize(array[idx-1])[-3:]=="ing":
+            transDict["service"] = array[idx-1]
+
+    # Checks if last element is a price
+    if len(array)>3 and array[idx] == "order" and array[idx-1] == "per" and array[idx-2][0].isdigit()==True:
+        idx = idx-3
+    if getCostFunction(array,idx,transDict) == 0: # Checks for price and returns if not found 
+        return
+    idx = idx-1
+
+    # Checks if "at" preceed price
+    if 0<idx and array[idx] == "at":
+        idx = idx-1
+
+
+    if 0<idx and array[idx] in qualifierList:   # Accounts for ITEMS that are also QUALIFIERS
+        transDict["item"] = array[idx]
+        idx = idx-1
+        if 0<idx and array[0] in ["a", "an"]:  # Checks if "a" or "an" precedes QUALIFIER
+            transDict["quantity"] = "1"    # Saves QUANTITY as 1
+            idx = idx-1
+            servicesHelper()  # Checks for SERVICES
+        elif 0<idx and array[idx][0].isdigit()==True:  # Checks if a digit precedes QUALIFIER
+            transDict["quantity"] = array[idx]   # Saves QUANTITY
+            idx = idx-1
+            servicesHelper()  # Checks for SERVICES
+    elif 0<idx and (process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing"):  
+        transDict["service"] = array[idx]
+        idx = idx-1
+        if 0<idx and lem.lemmatize(array[idx]) in qualifierList:  # Checks for QUALIFIER
+                transDict["qualifier"] = array[idx]
+                idx = idx-1
+                if 0<idx and array[idx][0].isdigit()==True:  # Checks if a digit precedes QUALIFIER
+                    transDict["quantity"] = array[idx]   # Saves QUANTITY
+    elif 0<idx and process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=90):  # Checks for ITEM
+        item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=90)
+        transDict["item"] = item[0][0]
+        i = len(item[0][0].split())
+        idx = idx-i
+
+        if 0<idx and array[0] == "of":  # Checks if "of" precedes/Accounts for QUALIFIER-of pattern
+            idx = idx-1
+            if 0<idx and lem.lemmatize(array[idx]) in qualifierList:  # Checks for QUALIFIER
+                transDict["qualifier"] = array[idx]
+                idx = idx-1
+                if 0<idx and array[0] in ["a", "an"]:  # Checks if "a" or "an" precedes QUALIFIER
+                    transDict["quantity"] = "1"    # Saves QUANTITY as 1
+                    idx = idx-1
+                    servicesHelper()  # Checks for SERVICES
+                elif 0<idx and array[idx][0].isdigit()==True:  # Checks if a digit precedes QUALIFIER
+                    transDict["quantity"] = array[idx]   # Saves QUANTITY
+                    idx = idx-1
+                    servicesHelper()  # Checks for SERVICES
+        elif 0<idx and lem.lemmatize(array[idx]) in qualifierList:  # Checks for QUALIFIER
+            transDict["qualifier"] = array[idx]
+            idx = idx-1
+            if 0<idx and array[idx][0].isdigit()==True and array[idx].isalnum()==False: # Checks for QUANTITY
+                transDict["quantity"] = array[idx]
+                if 0<idx and array[0] == "of":  # Checks if "of" precedes/Accounts for SERVICE-of pattern
+                    idx = idx-1
+                    # Checks for SERVICES
+                    if 0<idx and (process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing"):  
+                        transDict["service"] = array[idx]
+                    else:
+                        transDict["service"] = array[idx]
+                        transReview.append("REVIEW: Confirm Service")
+        elif 0<idx-1 and lem.lemmatize(array[idx-1]) in qualifierList:  # Accounts for 1 ADJECTIVE
+            idx = idx-1
+            varientsArray.append(array[idx])
+            transReview.append("Review: Confirm ADJECTIVE.")
+            getAdjs()
+        elif 0<idx-2 and lem.lemmatize(array[idx-2]) in qualifierList:  # Accounts for 2 ADJECTIVEs
+            idx = idx-2
+            varientsArray.append(array[idx])
+            varientsArray.append(array[idx-1])
+            transReview.append("Review: Confirm ADJECTIVES.")
+            getAdjs()
+
 # Function for "per" keyword
-def perFunction(array, transReview, peopleArray, placesArray, transDict):  
+def perFunction(array, transReview, peopleArray, placesArray):  
     index = array.index('per')  # Gets the array index of "per"
 
     if index+1 < len(array):    # Prevents out of bounds index increments
@@ -279,10 +617,10 @@ def perFunction(array, transReview, peopleArray, placesArray, transDict):
         peopleArray.appand(pplDict)   # Stores name
 
 # Function for "balance" keyword
-def balanceFunction(array, idx, transDict):
+def balanceFunction(array, transDict):
     # Gets the array index for "balance"/"ballance"
-    """if process.extractBests(lem.lemmatize("balance"), array, scorer=tsr, score_cutoff=87):"""
-    arrLength = len(array)-1  # Saves array length
+    keyword =  process.extractBests(lem.lemmatize("balance"), array, scorer=tsr, score_cutoff=87)
+    idx = array.index(keyword)  # Gets the array index of "per"
         
     # Removes other keywords attached to "balance"   
     if idx > 0 and array[idx-1] == "the":
@@ -290,26 +628,89 @@ def balanceFunction(array, idx, transDict):
         if idx > 1 and array[idx-2] == "for":
             array[idx-2] = ""
         transDict["item"] = "balance from"
-    if idx+1 <= arrLength and array[idx+1] == "of":
+    if idx+1 < len(array) and array[idx+1] == "of":
         array[idx+1] = ""
         transDict["item"] = "balance from"
 
 # Function for transactions begining with "Charge"/"Charges"
 def beginsChargeFunction(array, transDict, transReview, peopleArray):
     idx = 0
-    if idx+2 < len(array) and array[idx+1] == "on" and lem.lemmatize(array[idx+1]) == "merchandise":
+    if idx+2 < len(array) and array[idx+1] == "on" and fuzz.ratio(lem.lemmatize(array[idx+2]), "Merchandise") >= 87:
         idx+2
         if idx == len(array)-1:
             transDict["item"] = "Charges on Merchandise"
-        elif idx+1 < len(array) and array[idx+1] == "for":
+        elif idx+1 < len(array) and array[idx+1][0].isdigit():   # Checks if next value is a digit
+            idx+=1
+            temp = getCostFunction(array,idx, transDict)  # Checks for price
+            if temp == 0:
+                QQI_function(array, idx, transDict)   # checks for QUANTITY-QUALIFIER-ITEM pattern
+        elif idx+2 < len(array) and array[idx+1] == "for":  # checks if "for" is next word
+            idx+2
+            forFunction(array, idx, transDict, transReview, peopleArray)
+    elif idx+1 < len(array) and array[idx+1][0].isdigit():   # Checks if next value is a digit
+        idx+=1
+        x = getCostFunction(array,idx, transDict)  # Checks for price      
+    elif idx+1 < len(array) and findName(array, idx+1, transDict) !=0:
+        temp = findName(array, idx, transDict)
+        peopleArray.append(temp[0])
+        idx+=temp[1]
+        # Checks for SERVICES following names
+        if idx < len(array) and (process.extractBests(lem.lemmatize(array[idx]), servicesList, scorer=tsr, score_cutoff=95)==True or lem.lemmatize(array[idx])[-3:]== "ing"):
+            transDict["service"] = array[idx]
             idx+1
-            forFunction(array, transDict, transReview, peopleArray)
-        # and array[index+1] in peopleList:
-        #       do stuff
-        #   elif index+1 <= arrLength array[index+1][0].isdigit():
-        #       do stuff
 
+# Function for "on the" keyword pair
+def onTheFunction(array,idx1,idx2, placesArray, transReview):
+    array[idx1] = ""  # Removes "on"/"in"
+    array[idx2] = ""  # Removes "the"
+    
+    if idx2 < len(array):
+        idx2+=1
+        if getPlace(array, idx2, placesArray) == 0:
+            placesArray.append(array[idx2])
+            transReview.append("Review: Confirm place name.")
 
+# Function to run keyword functions
+def searchKeywords(array, transDict, transReview, peopleArray, placesArray):
+
+    if "per" in array:  # Checks for "per" keyword
+        perFunction(array, transReview, peopleArray, placesArray)
+    if "charge" in array:  # Checks for "charge" keyword
+        chargeFunction(array, transDict, transReview)
+    if "returned" in array or "returnd" in array or "omitted" in array:   # Checks for "returned" and "omitted" keywords
+        returnedOmittedFunction(array,transDict)
+    if process.extractBests("expense", array, scorer=tsr, score_cutoff=90):   # Checks for "expense" keyword
+        expenseFunction(array, peopleArray, transReview, transDict)
+    if process.extractBests("expence", array, scorer=tsr, score_cutoff=90):    # Checks for "expence" (misspelled) keyword
+        expenseFunction(array, peopleArray, transReview, transDict)
+    if process.extractBests("account", array, scorer=tsr, score_cutoff=90):  # Checks for "account" keyword
+        accountFunction(array, transReview, peopleArray, transDict)
+    if process.extractBests("received", array, scorer=tsr, score_cutoff=90):   # Checks for "received" keyword
+        receivedFunction (array,placesArray,transReview,peopleArray)
+    if "value" in array:   # Checks for "value" keyword
+        valueFunction(array, transReview,transDict)
+    if "by" in array:    # Checks for "by" keyword
+        byFunction(array, transReview,placesArray,peopleArray)
+    if "for" in array:    # Checks for "for" keyword
+        idx = None
+        forFunction(array, idx, transDict, transReview, peopleArray)
+    if process.extractBests("ballance", array, scorer=tsr, score_cutoff=87):   # Checks for "balance" keyword
+        balanceFunction(array, transDict)
+    for i in range(len(array) - 1):  # Checks for "on the" key phrase
+        value = array[i:i+2]
+        if value == ["on", "the"]:
+            idx1 = i
+            idx2 = i+1
+            onTheFunction(array,idx1, idx2, placesArray, transReview)
+            break
+    for i in range(len(array) - 1):  # Checks for "in the" key phrase
+        value = array[i:i+2]
+        if value == ["in", "the"]:
+            idx1 = i
+            idx2 = i+1
+            onTheFunction(array,idx1, idx2, placesArray, transReview)
+            break
+    
 # Function for "charge on/of" keyword pattern
 def chargeFunction(array, transDict, transReview):
     index = array.index('charge')   # Gets the array index for "charge"
@@ -352,102 +753,109 @@ def chargedFunction(array):
 # Function for "expense"/"expence" keyword
 def expenseFunction(array, peopleArray, transReview, transDict): 
     # Gets the array index for "expense"/"expence"
-    if 'expence' in array:
-        index = array.index('expence')
-    if 'expense' in array:
-        index = array.index('expense')
+    if process.extractBests("expense", array, scorer=tsr, score_cutoff=90):
+        word = process.extractBests("expense", array, scorer=tsr, score_cutoff=90)
+        idx = array.index(word[0][0])
+    if process.extractBests("expence", array, scorer=tsr, score_cutoff=90):
+        word = process.extractBests("expense", array, scorer=tsr, score_cutoff=90)
+        idx = array.index(word[0][0])
 
-    arrEnd = len(array)-index  # Saves distance between index and array end
 
     # Checks words preceding "Expense"
-    if index > 0:  # Prevents out of bounds index subtraction
-        if array[index - 1] in people_df["lastName"]:   # Checks if a last name is preceding
-            index = index-1
-            pplDict = lastNameFound(array,index)   # Checks for first name
-        elif array[index - 1] in people_df["firstName"]:  # Checks if a first name is preceding
+    if idx > 0:  # Prevents out of bounds index subtraction
+        if array[idx - 1] in people_df["lastName"]:   # Checks if a last name is preceding
+            idx = idx-1
+            newPplDict = lastNameFound(array,idx)   # Checks for first name
+        elif array[idx - 1] in people_df["firstName"]:  # Checks if a first name is preceding
             newPplDict = peopleObject.copy()   # Initializes new people dictionary
-            newPplDict["firstName"] = array[index-1]
-            if index > 1 and array[index-2] in prefixList:   # Checks if a prefix is preceding
-                newPplDict["prefix"] = array[index-2]
-        elif array[index-1] not in ["the", "for"]:   # Checks if "the" or "for" are preceding
+            newPplDict["firstName"] = array[idx-1]
+            if idx > 1 and array[idx-2] in prefixList:   # Checks if a prefix is preceding
+                newPplDict["prefix"] = array[idx-2]
+        elif array[idx-1] not in ["the", "for"]:   # Checks if "the" or "for" are preceding
             newPplDict = peopleObject.copy()   # Initializes new people dictionary
-            newPplDict["Account"] = f"{array[index-1]} Expenses" # Saves Account Name
-        elif array[index - 1] in suffixList and index > 1:   # Checks if suffix is preceding
-            index = index-1
-            pplDict = lastNameFound(array,index)   # Checks for first name
-            pplDict["suffix"] = array[index]  # Stores last name
+            newPplDict["Account"] = f"{array[idx-1]} Expenses" # Saves Account Name
+        elif array[idx - 1] in suffixList and idx > 1:   # Checks if suffix is preceding
+            pplDict = lastNameFound(array,idx-1)   # Checks for first name
+            pplDict["suffix"] = array[idx]  # Stores last name
 
         peopleArray.append(newPplDict)  # Adds person to list
         # Remove other keywords associated with "expense"/"expence"
-        removeKeywords(array, index)
+        removeKeywords(array, idx)
 
-    index+=1
     # Checks the following word
-    if arrEnd >= 2:  # Prevents out of bounds index increments
+    if idx+2 >= len(array):  # Prevents out of bounds index increments
+        idx+=1
         # Checks if following word is "for"
-        if array[index] == "for":
-            array[index] == ""  # Removes "for"
-            index+=1
-            newPplDict = findName(array, index, transReview)  # Checks for name
-            if newPplDict == 0:
+        if array[idx] == "for":
+            array[idx] == ""  # Removes "for"
+            idx+=1
+            newPplDict = findName(array, idx, transReview)  # Checks for name
+            if newPplDict == 0:  # If no person found, assumes it's an account
                 pplDict = peopleObject.copy
-                pplDict["Account"] = f"{array[index]} Expenses" # Saves Account Name    
+                pplDict["Account"] = f"{array[idx]} Expenses" # Saves Account Name    
                 peopleArray.append(pplDict)
             else:
-                peopleArray.append(newPplDict)
-        if array[index] == "of":   # Checks if following word is "of" and saves folloiwing word as the item
-            array[index] == ""  # Removes "of"
-            index+=1
-            transDict["item"] = array[index]
+                peopleArray.append(newPplDict[0])
+        if array[idx] == "of":   # Checks if following word is "of" and saves folloiwing word as the item
+            array[idx] == ""  # Removes "of"
+            idx+=1
+            transDict["item"] = array[idx]
             transReview.append("Review Item")  # Checks if first element of following string is a digit
-        elif array[index][0].isdigit() == True:
-                QQI_function(array, index, transDict)  # Checks for QUANTITY, QUALIFIER, and ITEM
+        elif array[idx][0].isdigit() == True:
+                QQI_function(array, idx, transDict)  # Checks for QUANTITY, QUALIFIER, and ITEM
 
 # Function for "account" keyword
-def accountFunction(array, transReview, peopleArray):
-    index = array.index('account')  # Gets the array index for "account"
-    arrEnd = len(array)-index  # Saves distance between index and array end
+def accountFunction(array, transReview, peopleArray, transDict):
+    idx = array.index('account')  # Gets the array index for "account"
 
     # Function to check preceeding words
     def helperFunction(index):
         if array[index - 1] in people_df["lastName"]:   # Checks if last name precedes word
             pplDict = lastNameFound(array,index-1)   # Checks for first name
             pplDict["lastName"] = array[index]  # Stores last name
-            peopleArray.append(pplDict)
+            return pplDict
         elif array[index - 1] in people_df["firstName"]:  # Checks if first name precedes word
             pplDict = peopleObject.copy()
             pplDict["firstName"] = array[index-1]
             if index > 1 and array[index-2] in prefixList:   # Checks if prefix precedes first name
                 pplDict["prefix"] = array[index-2]
-            peopleArray.append(pplDict)
+            return pplDict
         elif array[index-1] in professionList:   # Checks if a professsion precedes word
-                pplDict = peopleObject.copy()
-                pplDict["profession"] = array[index-1]
-                peopleArray.append(pplDict)
-
-    # Checks words preceding "account"
-    if index > 0:  # Prevents out of bounds index subtraction
-        if array[index - 1] in people_df["lastName"]:
-            helperFunction(index)  # Checks for names and professions
-        elif array[index-1] == "on": # Checks if "on" precedes "account"
-            array[index-1] = ""   # Removes associated keyword
-            index = index-1
-            if index > 0:  # Prevents out of bounds index subtraction
-                helperFunction(index) #Checks for names and professions
-        else:
             pplDict = peopleObject.copy()
-            pplDict["account"] = f"{array[index-1]} Account"  # Saves account
-            transReview.append("Review Acount name. ")
-            peopleArray.append(pplDict)
-
-    index+=1
+            pplDict["profession"] = array[index-1]
+            return pplDict
+        else:
+            return 0
+        
+    peopleArray.append(pplDict)
+    # Checks words preceding "account"
+    if idx > 0:  # Prevents out of bounds index subtraction
+        temp = helperFunction(idx)  # Checks for preceding names and professions
+        if temp == 0:  # If no name found
+            if array[idx-1] == "on": # Checks if "on" precedes "account"
+                array[idx-1] = ""   # Removes "on" keyword
+                if idx > 1:  # Prevents out of bounds index subtraction
+                    name = helperFunction(idx-1) #Checks for names and professions
+                    if name != 0: peopleArray.append(name)
+            elif idx > 1 and array[idx - 1] in suffixList:
+                name = helperFunction(idx-1)  # Checks for preceding names and professions
+                if name != 0: peopleArray.append(name)
+            else:
+                pplDict = peopleObject.copy()
+                pplDict["account"] = f"{array[idx-1]} Account"  # Saves account
+                transReview.append("Review Acount name. ")
+                peopleArray.append(pplDict)
+        else:
+            peopleArray.append(temp) 
+    
+    process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95)
     # Checks the following word
-    if arrEnd >= 2 and array[index] == "of":  # Checks if "of" follows "account"
-        array[index] == ""  # Removes "of"
-        index+=1
-        if findName(array, index) != 0: # Checks for name
-            temp =findName(array, index)  
-            peopleArray.append(temp)
+    if idx+2 < len(array) and array[idx+1] == "of":  # Checks if "of" follows "account"
+        array[idx+1] == ""  # Removes "of" keyword
+        idx+=2
+        new = findName(array, idx, transDict) # Checks for name
+        if new!= 0:  # Saves name if found
+            peopleArray.append(new)
 
 # Function for "received" keyword
 def receivedFunction (array,placesArray,transReview,peopleArray):
@@ -493,9 +901,13 @@ def valueFunction(array, transReview,transDict):
             transDict["item"] = f"Value of {array[index]}"
 
 # Function for "returned" keyword
-def returnedFunction(array,transDict):
-    if "returned" in array and transDict["service"] is None:
+def returnedOmittedFunction(array,transDict):
+    if "returned" in array and transDict["service"] == "":
         transDict["service"] = "returned"
+    if "returnd" in array and transDict["service"] == "":
+        transDict["service"] = "returned"
+    if "omitted" in array and transDict["service"] == "":
+        transDict["service"] = "omitted"
 
 # Function for "by" keyword
 def byFunction(array, transReview,placesArray,peopleArray):
@@ -538,22 +950,31 @@ def byFunction(array, transReview,placesArray,peopleArray):
 
 # Function for getting ADJECTIVES/Varients
 def findAdjectives(array, idx, transDict):
-    if process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95):  # Accounts for 1 ADJECTIVE
-        item = process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item
+    
+    if process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=87):  # Accounts for 1 ADJECTIVE
+        item = process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=87)
+        transDict["item"] = item[0][0]
         varientsArray = [array[idx]]
         transDict["varients"] = varientsArray
         i = len(item.split())+1
-        if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-            transDict["totalPrice"] = array[idx+i] 
-    elif idx+2 < len(array) and process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95):  # Accounts for 2 ADJECTIVES
-        item = process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95)[0][0]
-        transDict["item"] = item
+        idx = idx+i
+        getCostFunction(array,idx, transDict)
+    elif idx+2 < len(array) and process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=87):  # Accounts for 2 ADJECTIVES
+        item = process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=87)
+        transDict["item"] = item[0][0]
         varientsArray = [array[idx], array[idx+1]]
         transDict["varients"] = varientsArray
         i = len(item.split())+2
-        if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-            transDict["totalPrice"] = array[idx+i] 
+        idx = idx+i
+        getCostFunction(array,idx, transDict)
+    elif idx+3 < len(array) and process.extractBests(array[idx+3], itemList, scorer=tsr, score_cutoff=87):  # Accounts for 3 ADJECTIVES
+        item = process.extractBests(array[idx+3], itemList, scorer=tsr, score_cutoff=87)
+        transDict["item"] = item[0][0]
+        varientsArray = [array[idx], array[idx+3]]
+        transDict["varients"] = varientsArray
+        i = len(item.split())+3
+        idx = idx+i
+        getCostFunction(array,idx, transDict)
 
 # Function for the pattern: for-SERVICE-{of}
 # *********** Needed: ADD "&" check after SERVICE *********** #
@@ -562,29 +983,29 @@ def forServiceFunction(array, idx, transDict):
 
     # A helper function to get the item and/or adjectives
     def getItem():
-        if process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):
-            item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)[0][0]
-            transDict["item"] = item
+        if process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):   # Gets Item
+            item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)
+            transDict["item"] = item[0][0]
             i =len(item.split()) 
-            if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                transDict["totalPrice"] = array[idx+i] 
+            idx = idx+i
+            getCostFunction(array,idx, transDict)
         elif process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95):  # Accounts for 1 ADJECTIVE
-            item = process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95)[0][0]
-            transDict["item"] = item
+            item = process.extractBests(array[idx+1], itemList, scorer=tsr, score_cutoff=95)
+            transDict["item"] = item[0][0]
             varientsArray = [array[idx]]
             transDict["varients"] = varientsArray
             i = len(item.split())+1
-            if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                transDict["totalPrice"] = array[idx+i] 
+            idx = idx+i
+            getCostFunction(array,idx, transDict)
         elif idx+2 < len(array) and process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95):  # Accounts for 2 ADJECTIVES
-            item = process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95)[0][0]
-            transDict["item"] = item
+            item = process.extractBests(array[idx+2], itemList, scorer=tsr, score_cutoff=95)
+            transDict["item"] = item[0][0]
             varientsArray = [array[idx], array[idx+1]]
             transDict["varients"] = varientsArray
             i = len(item.split())+2
-            if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                transDict["totalPrice"] = array[idx+i] 
-
+            idx = idx+i
+            getCostFunction(array,idx, transDict)
+        
     if idx+2 < len(array):    # Prevents out of bounds index increments
         idx+=1
         if array[idx] in ["of", "a", "an"]:  # Checks is SERVICE is followed by "of" or "a"
@@ -593,8 +1014,8 @@ def forServiceFunction(array, idx, transDict):
                 item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)[0][0]
                 transDict["item"] = item
                 i = len(item.split()) 
-                if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                    transDict["totalPrice"] = array[idx+i]   
+                idx = idx+i
+                getCostFunction(array,idx, transDict)
             elif idx+2 < len(array) and array[idx+1] == "of":    # Accounts for QUALIFER, checks for "of"
                 transDict["qualifier"] == array[idx]  # Stores QUALIFER
                 idx+=2
@@ -615,121 +1036,187 @@ def forServiceFunction(array, idx, transDict):
                     transDict["qualifier"] == array[idx]
                     idx+=2
                     getItem()
-            elif array[idx].isdigit() == True:
-                QQI_function(array, idx, transDict)
+            elif array[idx][0].isdigit() == True:
+                QQI_function(array, idx, transDict)   # Checks for QUANTITY-QUALIFIER-ITEM pattern
         elif array[idx].isdigit() == True:
-            QQI_function(array, idx, transDict)
+            QQI_function(array, idx, transDict)  # Checks for QUANTITY-QUALIFIER-ITEM pattern
         elif process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):   # Checks for ITEM
                 item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)[0][0]
                 transDict["item"] = item
                 i = len(item.split()) 
-                if idx+i < len(array) and array[idx+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                    transDict["totalPrice"] = array[idx+i]   
+                idx = idx+i
+                getCostFunction(array,idx, transDict)
 
 # Function for "for" keyword
-def forFunction(array, transDict, transReview, peopleArray):
-    index = array.index('for')  # Gets the array index for "for"
+def forFunction(array, idx, transDict, transReview, peopleArray):    # sourcery skip: low-code-quality
+    
+    if idx is None:   # Sets index
+        idx = array.index('for')  # Gets the array index for "for"
 
-    if index+2 < len(array):
-        if array[index + 1] == "the": # Checks if "the" follows
-            index+=1
-            if array[index] in itemList:
-                transDict["item"] = array[index]  # Stores Item
-                priceFinder(index+1,array, transDict)  #checks for totalCost
-            elif array[index] in ["boy", "girl", "man", "woman"]:  # checks for people
-                if priceFinder(index+1,array, transDict) == 0: #checks for cost
-                    index+=1
-                    name = findName(array, index)  # Checks for name if no price found  
+    while idx < len(array):
+        idx+=1
+        if array[idx+1] == "the": # Checks if "the" follows
+            idx+=1
+            if process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):
+                item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)[0][0]
+                transDict["item"] = item  # Stores Item
+                i = len(item[0][0].split())  # Gets item name count
+                idx += i
+                getCostFunction(array,idx, transDict)  #checks for price
+            elif array[idx] in ["boy", "girl", "man", "woman"]:  # checks for people
+                idx+=1
+                if getCostFunction(array,idx, transDict) == 0: #checks for cost
+                    name = findName(array, idx)  # Checks for name if no price found  
                     if name != 0:   # If name found checks for price, accounts for length of name
-                        peopleArray.append(name) # stores person
-                        x = 8 - list(name.values()).count("")  # gets name count
-                        priceFinder(index+x, array, transDict)  # checks for following price
+                        peopleArray.append(name[0]) # stores person
+                        idx += name[1]  # Updates index with name count
+                        getCostFunction(array,idx, transDict)  # checks for following price
                     # Stores unkown person and checks if price follows
-                    elif index+1 < len(array) and array[index+1][0].isdigit() == True:  
+                    elif idx+2 < len(array) and (array[idx+1][0].isdigit() == True or array[idx+2][0].isdigit() == True):  
                         unknown = peopleObject.copy()
                         unknown["firstname"] = "FNU"  # Stores first name
                         unknown["lastname"] = "LNU"  # Stores stores 
                         peopleArray.append(unknown)
                         transReview.append("Review people names.")
-                        priceFinder(index+2,array, transDict)
-        elif array[index+1] in servicesList or lem.lemmatize(array[index+1])[-3:]== "ing":
-            index+=1
-            forServiceFunction(array, index, transDict)
-    elif index+1 < len(array):
-        index+=1
-        person = findName(array, index)
-        if person == 0:
-            forServiceFunction(array, index, transDict)
+                        idx+=1
+                        getCostFunction(array,idx, transDict) # checks for following price
+            elif idx+1 < len(array) and array[idx][0].isdigit() == True:  # Checks for QUANTITY-QUALIFIER-ITEM pattern
+                idx+=1
+                QQI_function(array, idx, transDict)
+           # Checks for SERVICES
+        elif process.extractBests(array[idx], servicesList, scorer=tsr, score_cutoff=90) or lem.lemmatize(array[idx])[-3:]== "ing":
+            idx+=1
+            forServiceFunction(array, idx, transDict)
+        elif idx+1 < len(array) and array[idx][0].isdigit() == True:  # Checks for QUANTITY-QUALIFIER-ITEM pattern
+            idx+=1
+            QQI_function(array, idx, transDict)
+        
+        person = findName(array, idx)  # Cheks for PERSON
+        if person == 0: # Checks for SERVICE if no person found
+            forServiceFunction(array, idx, transDict)
         else:
-            peopleArray.append(person)
+            peopleArray.append(person[0]) # Stores PERSON
+        break
 
 # Function for PERSON - "for" pattern
-def peopleForFunction (array, transDict, transReview):
-    index = array.index('for')  # Gets the array index for "for"
-    array[index] = ""   # Removes "for"
+def peopleForFunction(array, transDict, transReview):
+    idx = array.index('for')  # Gets the array index for "for"
+    array[idx] = ""   # Removes "for"
 
-    if index+1 == len(array): # Checks if next element is end of array
-        transDict["item"] = array[index+1]  # Stores Item
+    # Helper function for retreiving ITEMS
+    def getItemFunction():
+        item = process.extractBests(lem.lemmatize(array[idx]), itemList, scorer=tsr, score_cutoff=95)
+        transDict["item"] = item[0][0]
+        i = len(item[0][0].split())
+        idx = idx + i
+        getCostFunction(array,idx, transDict)
+
+    if idx+1 == len(array): # Checks if next element is end of array
+        transDict["item"] = array[idx+1]  # Stores Item
         transReview.append("Review Item")
-    elif index+2 < len(array) :
-        index+=1
-        if array[index] == "a":  # Checks if following word is "a"
-            index+=1
+    elif idx+2 < len(array) :
+        idx+=1
+        if array[idx] == "a":  # Checks if following word is "a"
+            idx+=1
             # Checks for ITEM
-            if process.extractBests(array[index], itemList, scorer=tsr, score_cutoff=95):
-                item = process.extractBests(array[index], itemList, scorer=tsr, score_cutoff=95)[0][0]
+            if process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95):
+                item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=95)[0][0]
                 transDict["item"] = item
                 i = len(item.split()) 
-                if index+i < len(array) and array[index+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                    transDict["totalPrice"] = array[index+i]                    
-            elif lem.lemmatize(array[index]) in qualifierList:  # Checks for Qualifier
-                QAITTP_function(array, index, transDict) # Checks for QUALIFIER-{ADJECTIVE}*-ITEM-TOTALPRICE
-            elif lem.lemmatize(array[index]) in servicesList:
-                transDict["service"] = array[index] 
-                if index+i < len(array) and array[index+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                    transDict["totalPrice"] = array[index+i] 
+                idx = idx+i 
+                getCostFunction(array,idx, transDict)                
+            elif lem.lemmatize(array[idx]) in qualifierList:  # Checks for Qualifier
+                QAITTP_function(array, idx, transDict) # Checks for QUALIFIER-{ADJECTIVE}*-ITEM-TOTALPRICE
+            elif lem.lemmatize(array[idx]) in servicesList:
+                transDict["service"] = array[idx] 
+                idx = idx+1 
+                getCostFunction(array,idx, transDict)
             else:
-                transDict["service"] = array[index] 
+                transDict["service"] = array[idx] 
                 transReview.append("Review: Confirm SERVICE.")
-                if index+i < len(array) and array[index+i][0].isdigit() == True:   # Checks for TOTAL PRICE
-                    transDict["totalPrice"] = array[index+i] 
-        if array[index] == "interest" and array[index+1] == "on":  # checks if "interest" follows
-            array[index+1] == ""     # Removes "on"
+                idx = idx+1 
+                getCostFunction(array,idx, transDict)
+        if array[idx] == "interest" and array[idx+1] == "on":  # checks if "interest" follows
+            array[idx+1] == ""     # Removes "on"
             transDict["item"] = "interest"  # Stores ITEM
-        if array[index][0].isdigit() == True:
-            transDict["quanity"] = array[index]
-            if index+2 < len(array) and lem.lemmatize(array[index+1]) in qualifierList:
-                index+1
-                QQI_function(array, index, transDict)
+        if array[idx][0].isdigit() == True:
+            transDict["quanity"] = array[idx]
+            if idx+2 < len(array) and lem.lemmatize(array[idx+1]) in qualifierList:
+                idx+1
+                QQI_function(array, idx, transDict)
+
+# Function for when a transactions begining with a SERVICE
+def beginsServiceFunction(array, idx, transDict, transReview):
+    transDict["service"] = array[idx]  # Stores service
+    idx = 1
+    
+    if idx<len(array) and array[idx] == "of":
+        forServiceFunction(array, idx, transDict)
+
+# Function for when a transactions begining with "allowance"
+def beginsAllowance(array, transDict, transReview):
+    idx = 0
+    if array[idx]=="an":
+        idx+=1
+
+    if idx+1 < len(array) and array[idx]=="on":
+        idx+=1
+        if array[idx][0].isdigit() == True:
+            QQI_function(array, idx, transDict, transReview)
+        elif process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=87):
+            item = process.extractBests(array[idx], itemList, scorer=tsr, score_cutoff=87)[0][0]
+            transDict["item"] = item
+            i = len(item.split())+1
+            idx+=i
+            getCostFunction(array,idx, transDict)
+        else:
+            findAdjectives(array, idx, transDict)
+
+# Function for when a transactions begining with "total"
+def totalFunction(array, transDict, transReview):
+    if len(array[0]) == 1 and array[0] == "total":
+        return
+    if len(array[0]) == 2 and process.extractBests(array[1], "tobacco", scorer=tsr, score_cutoff=90):
+        return
+    if len(array)>1 and array[1] == "carried":
+        return
+
+    if len(array) == 1 and array[1] == "sterling":
+        transDict["item"] = "Total"
+    elif len(array)>2 and process.extractBests(array[1], "tobacco", scorer=tsr, score_cutoff=90) and array[2].isdigit == True:
+        transDict["quantity"] = array[2]
+        idx = 3
+        if array[idx]=="is":
+            idx+=1
+        if getCostFunction(array, idx, transDict) == 0 and getCostFunction(array, idx, transDict) != 0:
+            transDict["qualifer"] = array[3]
+    elif len(array) < 6 and ("account" in array or "aacounts" in array):
+        transDict["item"] = "Total"
+    else:
+        transReview.append("Error: Enable to parse entry; pattern unrecognozed.")
 
 
 
-# Function for getting the total/unit cost and converting it to pound-shilling-pence
-# ********* Not completed ********* #
-def getCostFunction(array,index, transDict):
-    if index < len(array) and array[index][0].isdigit() == True:    # Prevents out of bounds index increment
-        price = nltk.word_tokenize(array[index])
-        if len(price) > 1 and price[1] == ".." and price[1] == "..":
-            pass
-    if index+2 <= len(array) and index+1 == "per" and index+2 == "order":
-        transDict["unitPrice"] = array[index]  # Saves number as unit price
+def subtotalFunction(array, transDict, transReview):
+    if len(array[0]) == 1 and array[0] == "subtotal":
+        return
+    if len(array[0]) == 2 and process.extractBests(array[1], "tobacco", scorer=tsr, score_cutoff=90):
+        return
+    if array[0] == "sum" and array[1] in ["being", "from"]:
+        return
 
-# ******************* VARIABLES USED ******************* #
-# entryError[] = List to store entry errors 
-# transArray[] = Array of tokenizd transactions from Chip's function
-# otherItems[] = List of items associated with a single transaction
-# peopleArray[] = List of people mentioned in a transaction
-# placesArray[] = List of places mentioned in a transaction
-# varientsArray = List of item's adjectives
-# transError[] = List to store entry errors
-# transReview = List of data to review in a transaction
-# ****************************************************** #
+# ************************************************** VARIABLES USED *********************************************************** #
+# entryError[] = List to store entry errors              |  transArray[] = Array of tokenizd transactions from Chip's function
+# varientsArray = List of item's adjectives              |  otherItems[] = List of items associated with a single transaction
+# transError[] = List to store entry errors              |  peopleArray[] = List of people mentioned in a transaction
+# transReview = List of data to review in a transaction  |  placesArray[] = List of places mentioned in a transaction
+# ***************************************************************************************************************************** #
 
 # Function that parses the transactions from the entry column (transArr = array/list of transactions)
 def transParse(transArr):    # sourcery skip: hoist-statement-from-loop
-    
  # Initializes error array for entry
     entryError = []
+    parsedTransactionsArray = []
 
     i = 0
     # Converts all array elememts to lowercase
@@ -747,6 +1234,13 @@ def transParse(transArr):    # sourcery skip: hoist-statement-from-loop
     
     # Iterating through array/list of transactions
     for transaction in transArr:
+
+        # Checks for "vizt", deletes it and everything after it
+        if "vizt" in transaction:
+            x = transaction.index('vizt')  # Gets the array index for "vizt"
+            if transaction[x+1] == "from":
+                del transaction[x:]
+
         # Initializes lists for transaction values and errors
         otherItems, peopleArray, placesArray, varientsArray, transReview = [],[],[],[],[] 
         transDict = transactionObject.copy() # Initializies dictionary for transaction
@@ -754,6 +1248,7 @@ def transParse(transArr):    # sourcery skip: hoist-statement-from-loop
         # Checks if first character of first string is a digit or letter
         if transaction[0][0].isdigit() == True:
             intFirstParse(transaction, transDict, otherItems, peopleArray, placesArray, varientsArray, transReview)
+            parsedTransactionsArray.append(transDict)
         elif transaction[0][0].isalpha() == True:
             # Checks if first word in array is "to" or "by"
             if transaction[0] == "to" | transaction[0] == "by":
@@ -762,9 +1257,12 @@ def transParse(transArr):    # sourcery skip: hoist-statement-from-loop
                 # Checks again if first character of first string is a digit or letter
                 if transaction[0][0].isdigit() == True:
                     intFirstParse(transaction,transDict,otherItems,peopleArray,placesArray,varientsArray,transReview)
+                    parsedTransactionsArray.append(transDict)
                 else:
                     alphaFirstParse(transaction,transDict,otherItems,peopleArray,placesArray,varientsArray,transReview)
+                    parsedTransactionsArray.append(transDict)
         else:
             entryError.append("Error: Entry does not begin with a letter or number")
               
-    
+    return [parsedTransactionsArray, transactionType]
+
