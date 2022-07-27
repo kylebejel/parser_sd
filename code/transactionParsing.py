@@ -1834,6 +1834,35 @@ def from_Keyword(array, transReview, peopleArray, placesArray):
         
         return
 
+# Handles the "to" keyword BY CHIP PLEASE REVIEW CHELSEA
+def to_keyword(array, transReview, peopleArray, placesArray):
+    index = array.index('to')
+
+    index += 1 #increments index
+    while len(array)>index:
+        if array[index] == "the":   # Checks for "the"
+            index+=1
+            temp = getPlace(array,index,placesArray)  # Checks for PLACE
+            if temp == 0:
+                person = findName(array, index)   # Checks for PERSON if PLACE not found
+                if person == 0:      # If no PERSON is found, saves word as a place
+                    placesArray.append(array[index])
+                    transReview.append("Review: Confirm PLACE name.")
+        elif index+1 < len(array) and lem.lemmatize(array[index]) in relationsList:	 # Checks if word is in relationList
+            index+=1
+            person = findName(array, index)
+        elif index+2 < len(array) and lem.lemmatize(array[index+1]) in relationsList:    # accounts for if possessives precede the relation
+            index+=2
+            person = findName(array, index)
+        else:
+            placesArray.append(array[index])  # If no known PERSON or PLACE is found, saves word as a place
+            transReview.append("Review: Confirm PLACE name.")
+                
+        if person != 0:   # Checks if person was found
+            peopleArray.appand(person[0])   # Stores name
+        
+        return
+
 # Handles the "balance" keyword
 def balance_Keyword(array, transDict,transReview, placesArray, peopleArray):
     # Gets the array index for "balance"/"ballance"
