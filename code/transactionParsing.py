@@ -1777,28 +1777,27 @@ def beginsPerson(array,idx,transDict,transReview, peopleArray, placesArray, othe
 
 # Handles the "per" keyword
 def per_Keyword(array, transReview, peopleArray, placesArray):  
-    if index is None:  # Checks if index id given
-        index = array.index('per')  # Gets the array index of "per"
+    idx = array.index('per')  # Gets the array index of "per"
 
     pplDict = 0   # Initializing variable
-    if index+1 < len(array):    # Prevents out of bounds index increments
-        index+=1
-        if len(array)>index+1 and array[index] == "the":   # Checks if next word is "the"
-            index+1
-            pplDict = findName(array, index)   # Looks for profession/person
+    if idx+1 < len(array):    # Prevents out of bounds index increments
+        idx+=1
+        if len(array)>idx+1 and array[idx] == "the":   # Checks if next word is "the"
+            idx+1
+            pplDict = findName(array, idx)   # Looks for profession/person
             if pplDict == 0:      # If no person/profession found, saves next word as a place
-                temp = getPlace(array,index,placesArray)
+                temp = getPlace(array,idx,placesArray)
                 if temp == 0:
-                    placesArray.append(array[index])
+                    placesArray.append(array[idx])
                     transReview.append("Review places")
-        elif index+1 < len(array) and lem.lemmatize(array[index]) in relationsList:	 # Checks if word is in relationList
-            index+=1
-            pplDict = findName(array, index)
-        elif index+2 < len(array) and lem.lemmatize(array[index+1]) in relationsList:    # accounts for if possessives precede the relation
-            index+=2
-            pplDict = findName(array, index)
+        elif idx+1 < len(array) and lem.lemmatize(array[idx]) in relationsList:	 # Checks if word is in relationList
+            idx+=1
+            pplDict = findName(array, idx)
+        elif idx+2 < len(array) and lem.lemmatize(array[idx+1]) in relationsList:    # accounts for if possessives precede the relation
+            idx+=2
+            pplDict = findName(array, idx)
         else:
-            pplDict = findName(array, index)
+            pplDict = findName(array, idx)
             
     if pplDict != 0:   # Checks if person was found
         peopleArray.appand(pplDict[0])   # Stores name
