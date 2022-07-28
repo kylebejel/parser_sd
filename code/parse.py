@@ -31,88 +31,128 @@ def parse(df):
     # df2.head()
     
     entry_mat = preprocess(df2)
-    transcriber_time = df2['Transcriber/Time']
-    file_name = df2['Transcriber/Time']
-    reel = df2['Transcriber/Time']
-    owner = df2['Transcriber/Time']
-    store = df2['Transcriber/Time']
-    year = df2['Transcriber/Time']
-    folio_page = df2['Transcriber/Time']
-    entry_id = df2['Transcriber/Time']
-    prefix = df2['Transcriber/Time']
-    account_firstname = df2['Transcriber/Time']
-    account_lastname = df2['Transcriber/Time']
-    suffix = df2['Transcriber/Time']
-    profession = df2['Transcriber/Time']
-    location = df2['Transcriber/Time']
-    reference = df2['Transcriber/Time']
-    drcr = df2['Transcriber/Time']
-    temp_year = df2['Transcriber/Time']
-    month = df2['Transcriber/Time']
-    day = df2['Transcriber/Time']
-    #skip entry bc parse_entry()
-    people = df2['Transcriber/Time']
-    places = df2['Transcriber/Time']
-    folio_reference = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
-    transcriber_time = df2['Transcriber/Time']
 
-    ret_df['[Transcriber/Time]'] = df2['Transcriber/Time']
-    ret_df['[File Name]'] = df2['[File Name]']
-    ret_df['Reel'] = df2['Reel']
-    ret_df['Owner'] = df2['Owner']
-    ret_df['Store'] = df2['Store']
-    ret_df[5] = df2[5]
-    ret_df['FolioPage'] = df2['Folio Page']
-    ret_df['EntryID'] = df2['[EntryID]']
-    ret_df['Prefix'] = df2['Prefix']
-    ret_df['AccountFirstName'] = df2['Account First Name']
-    ret_df['AccountLastName'] = df2['Account Last Name']
-    ret_df['Suffix'] = df2['Suffix']
-    ret_df['Profession'] = df2['Profession']
-    ret_df['Location'] = df2['Location']
-    ret_df['Reference'] = df2['Reference']
-    ret_df['DrCr'] = df2['Dr/Cr']
-    ret_df[16] = df2[18]
-    ret_df['Month'] = df2['_Month']
-    ret_df['Day'] = df2['Day']
-    # change to use parse_entry()
-    ret_df['Entry'] = df2['Entry']
-    ret_df['People'] = np.nan
-    ret_df['Places'] = np.nan
-    ret_df['FolioReference'] = df2['[Folio Reference]']
-    ret_df['EntryType'] = np.nan
-    ret_df['Ledger'] = np.nan
-    ret_df['Quantity'] = df2['Quantity']
-    ret_df['Commodity'] = df2['Commodity']
-    ret_df['SL'] = df2[27]
-    ret_df['SS'] = df2[28]
-    ret_df['SD'] = df2[29]
-    ret_df['Colony'] = df2['Colony']
-    ret_df['CL'] = df2[32]
-    ret_df['CS'] = df2[33]
-    ret_df['CD'] = df2[34]
-    ret_df['ArchMat'] = df2['[ArchMat]']
-    ret_df['GenMat'] = df2['[GenMat]']
-    ret_df['Final'] = df2['Final']
-    ret_df['ExtraNotes'] = np.nan
+    transcriber_time = df2['Transcriber/Time']
+    file_name = df2['[File Name]']
+    reel = df2['Reel']
+    owner = df2['Owner']
+    store = df2['Store']
+    year = df2['Year']
+    folio_page = df2['Folio Page']
+    entry_id = df2['[EntryID]']
+    prefix = df2['Prefix']
+    account_firstname = df2['Account First Name']
+    account_lastname = df2['Account Last Name']
+    suffix = df2['Suffix']
+    profession = df2['Profession']
+    location = df2['Location']
+    reference = df2['Reference']
+    drcr = df2['Dr/Cr']
 
-    return ret_df
-    # pass
+    # TEMPORARY YEAR CHANGE THIS
+    temp_year = df2['Temp Year']
+
+    month = df2['_Month']
+    day = df2['Day']
+
+    # skip entry bc parse_entry()
+
+    # CHANGE THIS TO EXTRACT INFO
+    people = df2['PEOPLE']
+    places = df2['PLACES']
+
+    folio_reference = df2['[Folio Reference]']
+
+    # CHANGE THIS TO EXTRACT INFO
+    entry_type = df2['ENTRY TYPE']
+    ledger = df2['LEDGER']
+
+    quantity = df2['Quantity']
+    commodity = df2['Commodity']
+    SL = df2['SL']
+    SS = df2['SS']
+    SD = df2['SD']
+    colony = df2['Colony']
+    CL = df2['CL']
+    CS = df2['CS']
+    CD = df2['CD']
+    archmat = df2['[ArchMat]']
+    genmat = df2['[GenMat]']
+    final = df2['Final']
+
+    # FIX EXTRA NOTES
+    extra_notes = df2['EXTRA NOTES']
+    error_flag = df2['flag']
+
+    ret_list = []
+    ret_size = 0
+    counter = 0
+
+    for entry in entry_mat:
+        temp_list = [None] * 38
+        # initial assignment
+        temp_list[0]=transcriber_time[counter]
+        temp_list[1]=file_name[counter]
+        temp_list[2]=reel[counter]
+        temp_list[3]=owner[counter]
+        temp_list[4]=store[counter]
+        temp_list[5]=year[counter]
+        temp_list[6]=folio_page[counter]
+        temp_list[7]=entry_id[counter]
+        temp_list[8]=prefix[counter]
+        temp_list[9]=account_firstname[counter]
+        temp_list[10]=account_lastname[counter]
+        temp_list[11]=suffix[counter]
+        temp_list[12]=profession[counter]
+        temp_list[13]=location[counter]
+        temp_list[14]=reference[counter]
+        temp_list[15]=drcr[counter]
+
+        # TEMPORARY YEAR CHANGE THIS
+        # temp_year = df2['Temp Year']
+        temp_list[16] = temp_year[counter]
+
+        temp_list[17] = month[counter]
+        temp_list[18] = day[counter]
+
+        temp_list[22] = folio_reference[counter]
+
+        temp_list[25] = quantity[counter]
+        temp_list[26] = commodity[counter]
+        temp_list[27] = SL[counter]
+        temp_list[28] = SS[counter]
+        temp_list[29] = SD[counter]
+        temp_list[30] = colony[counter]
+        temp_list[31] = CL[counter]
+        temp_list[32] = CS[counter]
+        temp_list[33] = CD[counter]
+        temp_list[34] = archmat[counter]
+        temp_list[35] = genmat[counter]
+        temp_list[36] = final[counter]
+
+        # FIX EXTRA NOTES
+        temp_list[37] = extra_notes[counter]
+        temp_list[38] = error_flag[counter]
+
+        for transaction in entry:
+            # assignment for changing entries
+            # finish making of row and append to ret list
+
+            # 19 20 21 23 24
+            temp_list[19] = entry
+            temp_list[20] = people
+            temp_list[21] = places
+            temp_list[23] = entry_type = df2['ENTRY TYPE']
+            temp_list[24] = ledger = df2['LEDGER']
+
+            ret_list.append(temp_list)
+            ret_size+=1
+        counter+=1
+        
+    df = pd.DataFrame(ret_list, columns = ['Column_A','Column_B','Column_C'])
+
+
+    # --------------------------------------------------------------------
 
 def main():
     cwd = Path.cwd()
