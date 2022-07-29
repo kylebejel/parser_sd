@@ -119,16 +119,19 @@ def editTokens(text):
       tokens[idx] = 'percent'
       tokens.pop(idx+1)
 
-  #changing 'w' and 'wt' to pounds
+  #changing 'w' and 'wt' 'ws' to pounds
   for idx, word in enumerate(tokens):
-    if tokens[idx] in ["w","wt","W", "WT", "Wt"]:
+    if tokens[idx] in ["w","wt","W", "WT", "Wt", 'ws', 'Ws', 'wS', 'WS']:
       tokens[idx] = "pound"
     # Accounts for "w" attached to numbers (Ex: "10w" becomes "10 pound") 
     if tokens[idx][0].isdigit() == True and (tokens[idx][-1] in ["w","W"] or tokens[idx][-2] in ["w","W"] ):
         tokens[idx] = tokens[idx].replace(tokens[idx][-1],"")
         if tokens[idx][-1] in ["w","W"]: tokens[idx] = tokens[idx].replace(tokens[idx][-1],"")
         tokens.insert(idx+1, 'pound')
-      
+  
+  #Two 'pounds' next to each other remove 1
+
+  # 1 M Thousand, and 1M Thousand
 
   return tokens
 
