@@ -68,27 +68,41 @@ def editTokens(text):
     if (word == '<' and tokens[idx+2] == '>' and not(tokens[idx+1].isalnum())):
       tokens.pop(idx+1)
  
-  # Removes periods and stitches prices back together
+  fractions = {'¼': "0.25", "⅓": "0.33", '½': "0.5", '⅕': "0.2", '⅙': "0.167", '⅐': "0.143", '⅛':" 0.125", '⅑': "0.111", 
+    '⅒': "0.1", '⅔': "0.667", '⅖': "0.4", '¾': "0.75", '⅗': "0.6", '⅜': "0.375", '⅘': "0.8", '⅚': "0.833", '⅞': "0.875" }
+  
   for idx, word in enumerate(tokens):
+    if word in fractions:
+      tokens[idx] = fractions[word]
+    
     # Removes periods
     if tokens[idx] == ".":
       tokens[idx] = ""
 
+
+  # Removes periods and stitches prices back together
+  for idx, word in enumerate(tokens):
     # Removes possessive 's
     if len(tokens[idx]) > 1 and tokens[idx][-1] == "s" and tokens[idx][-2] == "'":
       tokens[idx] = tokens[idx].replace("'","")
-
+     
+     # 0 .. 0 .. 0
+     # 0  1 2  3 4
     # Stitches Prices
     if tokens[idx] == "..":
-      if idx > 0 and idx+3 < len(tokens) and tokens[idx+2] == ".." and tokens[idx-1].isdigit()==True:
-        tokens[idx-1] = tokens[idx-1]+tokens[idx]+tokens[idx+1]+tokens[idx+2]+tokens[idx+3]
-        tokens[idx:idx+4] = ""
-      elif idx > 1 and idx+3 < len(tokens) and tokens[idx+2] == ".." and tokens[idx-2].isdigit()==True:
-        tokens[idx-2] = tokens[idx-2]+tokens[idx]+tokens[idx+1]+tokens[idx+2]+tokens[idx+3]
-        tokens[idx:idx+4] = ""
+      if len(tokens)>idx+2 and tokens[idx+1][0].isdigit()==True and tokens[idx+2] == "..":
+        tokens[idx] = tokens[idx]+tokens[idx+1]+tokens[idx+2]
+        tokens[idx+1] = ""
+        tokens[idx+2] = ""
+        if idx>0 and tokens[idx-1][0].isdigit()==True:
+          tokens[idx] = tokens[idx-1]+tokens[idx]
+          tokens[idx-1] = ""
+        if len(tokens)>idx+3 and tokens[idx+3][0].isdigit()==True:
+          tokens[idx] = tokens[idx]+tokens[idx+3]
+          tokens[idx+3] = ""
 
   #remove all character removals '^','[',']','<','>', '{', '}', '(', ')',  '&ct', 'etcetera', 'Etcetera', '£'
-  removals = ['^','[',']','<','>', '{', '}', '(', ')', '&ct', 'etcetera', 'Etcetera', '£']  # add all characters to be removed to this list
+  removals = ['^','[',']','<','>', '{', '}', '(', ')', '&ct', 'etcetera', 'Etcetera', '£','?']  # add all characters to be removed to this list
   for count, character in itertools.product(range(len(tokens)), removals):
     while character in tokens[count]:
       tokens[count] = tokens[count].replace(character,"")
@@ -96,13 +110,6 @@ def editTokens(text):
   #remove "" tokens
   while ("" in tokens):
     tokens.remove('')
-
-  #fraction handling
-  fractions = ["¼", "½", "¾", "⅓", "⅔", "⅕", "⅖", "⅗", "⅘", "⅙", "⅚", "⅛", "⅜", "⅝", "⅞"]
-  fracReplace = ["0.25", "0.5", "0.75", "0.333", "0.667", "0.2", "0.4", "0.6", "0.8", "0.167", "0.833", "0.125", "0.375", "0.625", "0.875"]
-  for count in range(len(tokens)):
-    for fraction in fractions:
-      tokens[count] = tokens[count].replace(fraction, fracReplace[fractions.index(fraction)])
 
   #gluing preceding tokens and fractions together
   numberRE = re.compile("[0-9]+")
@@ -119,19 +126,23 @@ def editTokens(text):
       tokens[idx] = 'percent'
       tokens.pop(idx+1)
 
+  saveIdx =[]
   #changing 'w' and 'wt' 'ws' to pounds
   for idx, word in enumerate(tokens):
     if tokens[idx] in ["w","wt","W", "WT", "Wt", 'ws', 'Ws', 'wS', 'WS']:
       tokens[idx] = "pound"
     # Accounts for "w" attached to numbers (Ex: "10w" becomes "10 pound") 
-    if tokens[idx][0].isdigit() == True and (tokens[idx][-1] in ["w","W"] or tokens[idx][-2] in ["w","W"] ):
+    if len(tokens[idx])>1 and tokens[idx][0].isdigit() == True and (tokens[idx][-1] in ["w","W"] or tokens[idx][-2] in ["w","W"] ):
         tokens[idx] = tokens[idx].replace(tokens[idx][-1],"")
+        saveIdx.append(idx)
         if tokens[idx][-1] in ["w","W"]: tokens[idx] = tokens[idx].replace(tokens[idx][-1],"")
-        tokens.insert(idx+1, 'pound')
-  
-  #Two 'pounds' next to each other remove 1
+        
+  for i in saveIdx:
+    tokens.insert(i+1, 'pound')
 
-  # 1 M Thousand, and 1M Thousand
+  # two pounds in a row
+
+  # 1 M thousand and 1M Thousand
 
   return tokens
 
