@@ -146,23 +146,26 @@ def editTokens(text):
     for spelling in poundSpellings:
       if word == spelling:
         for spelling2 in poundSpellings:
-          if tokens[idx+1] == spelling:
-            tokens.pop(idx+1)
+          while (idx+1 < len(tokens)):
+            if tokens[idx+1] == spelling:
+              tokens.pop(idx+1)
 
   # 1 M thousand and 1M Thousand --> 1000
   for idx, word in enumerate(tokens):
     numMre = re.compile('\d+(M|m)')# any number of digits followed by a single 'M' or 'm'
     if word.isnumeric():
-      if tokens[idx+1] == 'M' or tokens[idx+1] == 'm':
-        if tokens[idx+2] == 'thousand' or tokens[idx+2] == 'Thousand':
-          tokens[idx] = tokens[idx]+'000'
-          tokens.pop(idx+2)
-          tokens.pop(idx+1)
+      while (idx+2 < len(tokens)):
+        if tokens[idx+1] == 'M' or tokens[idx+1] == 'm':
+          if tokens[idx+2] == 'thousand' or tokens[idx+2] == 'Thousand':
+            tokens[idx] = tokens[idx]+'000'
+            tokens.pop(idx+2)
+            tokens.pop(idx+1)
     elif re.match(numMre, word):
-      if tokens[idx+1] == 'thousand' or tokens[idx+1] == 'Thousand':
-        tokens[idx] = tokens[idx].rstrip(tokens[idx][-1])
-        tokens[idx] = tokens[idx] + '000'
-        tokens.pop(idx+1)
+      while (idx+1 < len(tokens)):
+        if tokens[idx+1] == 'thousand' or tokens[idx+1] == 'Thousand':
+          tokens[idx] = tokens[idx].rstrip(tokens[idx][-1])
+          tokens[idx] = tokens[idx] + '000'
+          tokens.pop(idx+1)
 
   return tokens
 
