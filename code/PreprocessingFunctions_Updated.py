@@ -147,7 +147,7 @@ def editTokens(text):
       if word == spelling:
         for spelling2 in poundSpellings:
           while (idx+1 < len(tokens)):
-            if tokens[idx+1] == spelling:
+            if tokens[idx+1] == spelling2:
               tokens.pop(idx+1)
             break
 
@@ -170,7 +170,6 @@ def editTokens(text):
           tokens[idx] = tokens[idx] + '000'
           tokens.pop(idx+1)
         break
-
   return tokens
 
 
