@@ -14,9 +14,9 @@ def seperate(text):
 #creat function to preprocess ALREADY SEPEARTED ENTRIES with nlkt
 def editTokens(text):
   #create variable tokens which is tokenized string
-  tknzr = nltk.tokenize.TweetTokenizer()
+  tknzr = nltk.tokenize.TweetTokenizer(match_phone_numbers=False)
   tokens = tknzr.tokenize(text)
-
+  print(tokens)
   #begin process of removing words that are replacements
   replaceWordIndex = []
   removenumbersIndex = []
@@ -149,8 +149,10 @@ def editTokens(text):
           while (idx+1 < len(tokens)):
             if tokens[idx+1] == spelling:
               tokens.pop(idx+1)
+            break
 
   # 1 M thousand and 1M Thousand --> 1000
+  print(tokens)
   for idx, word in enumerate(tokens):
     numMre = re.compile('\d+(M|m)')# any number of digits followed by a single 'M' or 'm'
     if word.isnumeric():
@@ -160,12 +162,14 @@ def editTokens(text):
             tokens[idx] = tokens[idx]+'000'
             tokens.pop(idx+2)
             tokens.pop(idx+1)
+        break
     elif re.match(numMre, word):
       while (idx+1 < len(tokens)):
         if tokens[idx+1] == 'thousand' or tokens[idx+1] == 'Thousand':
           tokens[idx] = tokens[idx].rstrip(tokens[idx][-1])
           tokens[idx] = tokens[idx] + '000'
           tokens.pop(idx+1)
+        break
 
   return tokens
 
