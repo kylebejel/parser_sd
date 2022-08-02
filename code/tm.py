@@ -4,10 +4,9 @@ def extract_tm(text):
     # can be expanded by appending regex for [int]..[int]..[int]
     # parenthises separate groups
     #tm_pattern = re.compile("\[TM: ([0-9]{4}|[0-9]{5}) ([a-zA-Z]{2}|[a-zA-Z]{3})\] [A-Z] ([0-9]*) ")
-    tm_pattern = re.compile("\[TM: ([0-9]{4}|[0-9]{5}) ([a-zA-Z]{2}|[a-zA-Z]{3})\] [A-Z]? ([0-9]*) ([0-9]*)\.\.([0-9]*)\.\.([0-9]*)")
+    tm_pattern = re.compile("\[TM: ([0-9]{4,5}) ([^\]]{2,4})\] +[A-Z]? +([0-9]*) +([0-9]*)\. ?\.([0-9]*)\. ?\.([0-9]*)")
 
-    found_tm = tm_pattern.search(text)
-
+    found_tm = re.search(tm_pattern, text)
     # more variables can be made for data values
     TM_id = found_tm.group(1)
     Mark = found_tm.group(2)
