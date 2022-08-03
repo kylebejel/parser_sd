@@ -1,0 +1,141 @@
+# These are all the schemas based on how the database is set up.
+# [Object] entires  signifiy that it takes an array of that Object
+# "" entries signify that it takes a string/integer
+# [] entires signify that it takes in an array of strings/integers
+
+TobaccoMarkObject = {
+    "markID": ObjectId,
+    "markName":""
+}
+# ObjectId is the ID to the Tobacco Mark in the in the tobaccoMark database
+# We don't need to worry about it this, though.
+
+PoundsShillingsPence = {
+    "pounds": "", 
+    "shillings": "", 
+    "pence": ""
+}
+
+MoneyObject= {
+    "markName":"",
+    "quantity":"",
+    "commodity":"",
+    "colony":"",
+    "sterling":"",
+    "currency":"",
+}
+
+NoteObject= {
+    "noteNum":"",
+    "totalWeight":"",
+    "barrelWeight":"",
+    "tobaccoWeight":"",
+}
+
+MetaObject= {
+    "ledger":"",
+    "reel":"",
+    "owner":"",
+    "store":"",
+    "year":"",
+    "folioPage":"",
+    "entryID":"",
+    "comments":""
+}
+
+MentionedItemsObject= {
+    "quantity":"",
+    "qualifier":"",
+    "item":"",
+}
+
+ItemOrServiceObject= {
+    "quantity":"",
+    "qualifier":"",
+    "variants":"",
+    "item":"",
+    "category":"",
+    "subcategory":"",
+    "unitCost":"",
+    "itemCost":""
+}
+
+ItemEntryObject= {
+    "perOrder":"",
+    "percentage":"",
+    "itemsOrServices":[],
+    "itemsMentioned": [MentionedItemsObject]
+}
+
+TobaccoMoneyObject = {
+    "moneyType":"",
+    "tobaccoAmount":"",
+    "rateForTobacco": PoundsShillingsPence,
+    "casksInTransaction":"",
+    "tobaccoSold": PoundsShillingsPence,
+    "casksSoldForEach": PoundsShillingsPence,
+}
+
+TobaccoEntryObject = {
+    "entry":"",
+    "marks": [TobaccoMarkObject],
+    "notes": [NoteObject],
+    "money": [TobaccoMoneyObject],
+    "tobaccoShaved": ""
+}
+
+RegularEntryObject = {
+    "entry":"",
+    "tobaccoMarks": [TobaccoMarkObject],
+    "itemsMentioned": [MentionedItemsObject],
+}
+
+PersonObject = {
+    "name":"",
+    "id": ObjectId,
+}
+# ObjectId is the ID to the person in the people database
+# We don't need to worry about it because we're not linking people, the next group can do that.
+
+PlaceObject = {
+    "name":"",
+    "id": ObjectId,
+}
+# ObjectId is the ID to the person in the people database
+# We don't need to worry about it because we're not linking places.
+
+DateObject = {
+    "day":"",
+    "month": "",
+    "year": "",
+    "fullDate": ""
+}
+
+AccHolderObject ={
+    "prefix": "", 
+    "accountFirstName": "", 
+    "accountLastName": "", 
+    "suffix": "", 
+    "profession": "", 
+    "location":"", 
+    "reference": "", 
+    "debitOrCredit": "", 
+    "accountHolderID": ObjectId 
+    }
+    # ObjectId is the ID to the person in the people database
+    # We don't need to worry about it because we're not linking people.
+    
+exportClassEntry= {
+    "accountHolder": AccHolderObject,
+    "meta": MetaObject,
+    "dateInfo": DateObject,
+    "folioRefs": [],
+    "ledgerRefs": [],
+    "itemEntries": [ItemEntryObject],
+    "tobaccoEntry": TobaccoEntryObject,
+    "regularEntry": RegularEntryObject,
+    "people": [PersonObject],
+    "places": [PlaceObject],
+    "entry":"",
+    "money": [MoneyObject],
+}
