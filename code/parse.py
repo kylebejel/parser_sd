@@ -6,87 +6,155 @@ import numpy as np
 def preprocess(arr):
     pass
 
+def parse_transaction():
+    pass
+
 # code for the function that parses everything
 def parse(df):
-    ret_df = pd.DataFrame
-    ret_df.columns = ['[Transcriber/Time]','[File Name]','Reel','Owner','Store','Year','FolioPage','EntryID','Prefix','AccountFirstName','AccountLastName','Suffix','Profession','Location','Reference','DrCr','Year','Month','Day','Entry','People','Places','FolioReference','EntryType','Ledger','Quantity','Commodity','SL','SS','SD','Colony','CL','CS','CD','ArchMat','GenMat','Final','ExtraNotes']
     
-    new_header = df.iloc[0]
-    df2 = df[1:]
-    df2.columns = new_header
-
-    # transcriber_time = df2.iloc[0][1]
-    # filename = df2.iloc[1][1]
-
-    transcriber_time = df2.iloc[0][0]
-    filename = df2.iloc[0][1]
+    transcriber_time = df.iloc[0][0]
+    filename = df.iloc[0][1]
     # print(f'transcriber: {transcriber_time}\nfilename: {filename}')
-    df2.at[1,'[Transcriber/Time]'] = np.nan
-    df2.at[1,'[File Name]'] = np.nan
+    df.at[1,'[Transcriber/Time]'] = np.nan
+    df.at[1,'[File Name]'] = np.nan
     print(f'transcriber: {transcriber_time}\nfilename: {filename}')
-    df2.at[2,'[Transcriber/Time]'] = transcriber_time
-    df2.at[2,'[File Name]'] = filename
-    # df2.drop(labels = 1, axis = 0)
-    df2 = df2.iloc[1:]
-    # df2.head()
+    df.at[2,'[Transcriber/Time]'] = transcriber_time
+    df.at[2,'[File Name]'] = filename
+    # df.drop(labels = 1, axis = 0)
+    df = df.iloc[1:]
+    # df.head()
     
-    entry_mat = preprocess(df2)
+    # run preprocessing
+    entry_mat = preprocess(df)
 
-    transcriber_time = df2['Transcriber/Time']
-    file_name = df2['[File Name]']
-    reel = df2['Reel']
-    owner = df2['Owner']
-    store = df2['Store']
-    year = df2['Year']
-    folio_page = df2['Folio Page']
-    entry_id = df2['[EntryID]']
-    prefix = df2['Prefix']
-    account_firstname = df2['Account First Name']
-    account_lastname = df2['Account Last Name']
-    suffix = df2['Suffix']
-    profession = df2['Profession']
-    location = df2['Location']
-    reference = df2['Reference']
-    drcr = df2['Dr/Cr']
+    # make repeated idxs dict
+    repeated_idxs = {}
+    for x in range(0,len(entry_mat)):
+        l = len(entry_mat[x])
+        if l > 1:
+            repeated_idxs[x] = l
+    
+    parsed_transactions = parse_transaction(entry_mat)
+
+    # make lists for each column
+    transcriber_time = df['Transcriber/Time']
+    file_name = df['[File Name]']
+    reel = df['Reel']
+    owner = df['Owner']
+    store = df['Store']
+    year = df['Year']
+    folio_page = df['Folio Page']
+    entry_id = df['[EntryID]']
+    prefix = df['Prefix']
+    account_firstname = df['Account First Name']
+    account_lastname = df['Account Last Name']
+    suffix = df['Suffix']
+    profession = df['Profession']
+    location = df['Location']
+    reference = df['Reference']
+    drcr = df['Dr/Cr']
 
     # TEMPORARY YEAR CHANGE THIS
-    temp_year = df2['Temp Year']
+    temp_year = df['Temp Year']
 
-    month = df2['_Month']
-    day = df2['Day']
+    month = df['_Month']
+    day = df['Day']
 
     # skip entry bc parse_entry()
 
     # CHANGE THIS TO EXTRACT INFO
-    people = df2['PEOPLE']
-    places = df2['PLACES']
+    people = df['PEOPLE']
+    places = df['PLACES']
 
-    folio_reference = df2['[Folio Reference]']
+    folio_reference = df['[Folio Reference]']
 
     # CHANGE THIS TO EXTRACT INFO
-    entry_type = df2['ENTRY TYPE']
-    ledger = df2['LEDGER']
+    entry_type = df['ENTRY TYPE']
+    ledger = df['LEDGER']
 
-    quantity = df2['Quantity']
-    commodity = df2['Commodity']
-    SL = df2['SL']
-    SS = df2['SS']
-    SD = df2['SD']
-    colony = df2['Colony']
-    CL = df2['CL']
-    CS = df2['CS']
-    CD = df2['CD']
-    archmat = df2['[ArchMat]']
-    genmat = df2['[GenMat]']
-    final = df2['Final']
+    quantity = df['Quantity']
+    commodity = df['Commodity']
+    SL = df['SL']
+    SS = df['SS']
+    SD = df['SD']
+    colony = df['Colony']
+    CL = df['CL']
+    CS = df['CS']
+    CD = df['CD']
+    archmat = df['[ArchMat]']
+    genmat = df['[GenMat]']
+    final = df['Final']
 
     # FIX EXTRA NOTES
-    extra_notes = df2['EXTRA NOTES']
-    error_flag = df2['flag']
+    extra_notes = df['EXTRA NOTES']
+    error_flag = df['flag']
 
     ret_list = []
     ret_size = 0
     counter = 0
+
+    for transaction in parsed_transactions:
+        temp_row = [38] * None
+        # assignments
+        temp_row[0]=transcriber_time[counter]
+        temp_row[1]=file_name[counter]
+        temp_row[2]=reel[counter]
+        temp_row[3]=owner[counter]
+        temp_row[4]=store[counter]
+        temp_row[5]=year[counter]
+        temp_row[6]=folio_page[counter]
+        temp_row[7]=entry_id[counter]
+        temp_row[8]=prefix[counter]
+        temp_row[9]=account_firstname[counter]
+        temp_row[10]=account_lastname[counter]
+        temp_row[11]=suffix[counter]
+        temp_row[12]=profession[counter]
+        temp_row[13]=location[counter]
+        temp_row[14]=reference[counter]
+        temp_row[15]=drcr[counter]
+        # TEMPORARY YEAR CHANGE THIS
+        # temp_year = df['Temp Year']
+        temp_row[16] = temp_year[counter]
+        temp_row[17] = month[counter]
+        temp_row[18] = day[counter]
+        temp_row[22] = folio_reference[counter]
+        temp_row[25] = quantity[counter]
+        temp_row[26] = commodity[counter]
+        temp_row[27] = SL[counter]
+        temp_row[28] = SS[counter]
+        temp_row[29] = SD[counter]
+        temp_row[30] = colony[counter]
+        temp_row[31] = CL[counter]
+        temp_row[32] = CS[counter]
+        temp_row[33] = CD[counter]
+        temp_row[34] = archmat[counter]
+        temp_row[35] = genmat[counter]
+        temp_row[36] = final[counter]
+        # FIX EXTRA NOTES
+        temp_row[37] = extra_notes[counter]
+        temp_row[38] = error_flag[counter]
+
+        if counter in repeated_idxs.keys:
+            for x in range(0,repeated_idxs[counter]):
+                # people, places, ledger, entry type, flag?
+                temp_row[19] = transaction['entry']
+                temp_row[20] = transaction['people']
+                temp_row[21] = transaction['places']
+                temp_row[23] = transaction['entry_type']
+                temp_row[24] = transaction['ledger']
+                # append
+                ret_list.append(temp_row)
+
+        else:
+            temp_row[19] = transaction['entry']
+            temp_row[20] = transaction['people']
+            temp_row[21] = transaction['places']
+            temp_row[23] = transaction['entry_type']
+            temp_row[24] = transaction['ledger']
+            # append
+            ret_list.append(temp_row)
+        # increment
+        counter+=1
 
     for entry in entry_mat:
         temp_list = [None] * 38
@@ -109,7 +177,7 @@ def parse(df):
         temp_list[15]=drcr[counter]
 
         # TEMPORARY YEAR CHANGE THIS
-        # temp_year = df2['Temp Year']
+        # temp_year = df['Temp Year']
         temp_list[16] = temp_year[counter]
 
         temp_list[17] = month[counter]
@@ -139,17 +207,20 @@ def parse(df):
             # finish making of row and append to ret list
 
             # 19 20 21 23 24
+
+            output = parse_transaction(transaction)
+
             temp_list[19] = entry
             temp_list[20] = people
             temp_list[21] = places
-            temp_list[23] = entry_type = df2['ENTRY TYPE']
-            temp_list[24] = ledger = df2['LEDGER']
+            temp_list[23] = entry_type
+            temp_list[24] = ledger
 
             ret_list.append(temp_list)
             ret_size+=1
         counter+=1
         
-    df = pd.DataFrame(ret_list, columns = ['Column_A','Column_B','Column_C'])
+    final_df = pd.DataFrame(ret_list, columns = ['Column_A','Column_B','Column_C'])
 
 
     # --------------------------------------------------------------------
