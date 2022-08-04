@@ -3269,7 +3269,6 @@ def editTokens(text):
     if tokens[idx] == ".":
       tokens[idx] = ""
 
-
   # Removes periods and stitches prices back together
   for idx, word in enumerate(tokens):
     # Removes possessive 's
@@ -3371,9 +3370,6 @@ def preprocess(string):#function that is acctually called
   while [] in preprocessed:
     preprocessed.remove([])
   return preprocessed
-
-
-
 
 # code for the function that parses everything
 def parse(df):
