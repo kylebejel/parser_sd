@@ -1,4 +1,5 @@
 import re
+import datetime
 import nltk
 import numpy as np
 import pandas as pd
@@ -3428,7 +3429,6 @@ def parse(df):
         if l > 1:
             repeated_idxs[x] = l
 
-    print(f"Length before is {repeated_idxs}")
     parsed_transactions = []
     for em in entry_mat:
         temp = parse_transaction(em)
@@ -3599,8 +3599,12 @@ def parse(df):
                 entry_obj['places'] = places_obj_list
                 entry_obj['entry'] = entry[counter]
                 entry_obj['money'] = money_obj
+                entry_obj['__v'] = 0
+                entry_obj['createdAt'] = datetime.datetime.utcnow()
+                entry_obj['updatedAt'] = datetime.datetime.utcnow()
                 entry_obj['errorReview'] = transaction[4]
-
+                
+                
                 # append
                 # ret_list.append(temp_row)
                 entry_obj_list.append(entry_obj)
@@ -3611,9 +3615,8 @@ def parse(df):
             item_entry_obj = {}
             item_or_service_obj = {}
 
-            print(type(item_or_service_obj))
             transaction = parsed_transactions[transaction_counter]
-            print(transaction[0])
+
             item_or_service_obj['quantity'] = transaction[0][0]['quantity']
             item_or_service_obj['qualifier'] = transaction[0][0]['qualifier']
             item_or_service_obj['variants'] = transaction[0][0]['variants']
@@ -3655,6 +3658,9 @@ def parse(df):
             entry_obj['places'] = places_obj_list
             entry_obj['entry'] = entry[counter]
             entry_obj['money'] = money_obj
+            entry_obj['__v'] = 0
+            entry_obj['createdAt'] = datetime.datetime.utcnow()
+            entry_obj['updatedAt'] = datetime.datetime.utcnow()
             entry_obj['errorReview'] = transaction[4]
 
                 # append
@@ -3664,7 +3670,7 @@ def parse(df):
 
         # increment
         counter+=1
-        
+        print(entry_obj_list[0])
     return entry_obj_list
 
 
@@ -3672,7 +3678,7 @@ def parse(df):
 
 def main():
     cwd = Path.cwd()
-    fp = cwd / 'code/C_1760_002_FINAL_.xlsx'
+    fp = cwd / 'code/C_1760_002_FINAL_2.xlsx'
     # print(f'dir is : {above}')
 
     df = pd.read_excel(fp)
@@ -3682,7 +3688,7 @@ def main():
             df = df.reset_index(drop=True)
 
     entry_objs = parse(df)
-    print(entry_objs)
+    result_ids = db.parsedEntries.insert_many(entry_objs)
 
 if __name__ == '__main__':
     main()
