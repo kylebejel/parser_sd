@@ -309,7 +309,7 @@ ignore = ["&", ":","/:"]
 peopleObject ={"profession": "", "prefix": "", "firstName": "", "lastName": "", "suffix": "", "account":"", "location": "", 
                     "reference": "", "relations": ""}
 transactionObject ={"quantity": "", "qualifier": "", "variants": [], "item": "", "unitCost": "", "totalCost": "",
-                    "service": "", "includedItems": [],"mentionedPpl": [],"mentionedPlaces": [], "errorReview":[]}
+                    "service": "", "includedItems": []}
 moneyObject = {"pounds": "", "shillings": "", "pence": ""}
 
 # =========================================== #
@@ -3206,19 +3206,12 @@ def parse_transaction(transArr):    # sourcery skip: hoist-statement-from-loop
             entryErrors.append("Error: Entry does not begin with a letter or number")
         
         if len(peopleArray)>0:
-            temp = convertPeopleObject(peopleArray)
-            transDict["mentionedPpl"].append(temp)
-        
-        if len(placesArray)>0:
-            transDict["mentionedPlaces"].append(placesArray)
-
-        if len(transReview)>0:
-            transDict["errorReview"].append(transReview)
+            peopleArray = convertPeopleObject(peopleArray)
         
         allTransactionsList.append(transDict)
         
               
-    return [allTransactionsList, transactionType]
+    return [allTransactionsList, peopleArray, placesArray, transactionType,transReview]
 
 # Function to connect to database
 def get_database():  
@@ -3584,10 +3577,10 @@ def parse(df):
                 people_obj_list = []
                 places_obj_list = []
 
-                for person in transaction['mentionedPpl']:
-                    person_obj = {}
-                    person_obj['name'] = person
-                    people_obj_list.append(person_obj)
+                # for person in transaction['mentionedPpl']:
+                #     person_obj = {}
+                #     person_obj['name'] = person
+                #     people_obj_list.append(person_obj)
 
                 for place in transaction['mentionedPlaces']:
                     place_obj = {}
@@ -3619,6 +3612,7 @@ def parse(df):
             item_entry_obj = {}
             item_or_service_obj = {}
 
+            print(type(item_or_service_obj))
             transaction = parsed_transactions[transaction_counter]
             print(transaction)
             item_or_service_obj['quantity'] = transaction['quantity']

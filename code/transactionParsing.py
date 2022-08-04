@@ -319,6 +319,171 @@ transactionObject ={"quantity": "", "qualifier": "", "variants": [], "item": "",
 moneyObject = {"pounds": "", "shillings": "", "pence": ""}
 
 # =========================================== #
+#    Generating  Lists From Database Data     #
+# =========================================== #
+
+# Generates dataframes for the database collections
+places_df = pd.DataFrame(db["places"].find())
+people_df = pd.DataFrame(db["people"].find())
+item_df = pd.DataFrame(db["items"].find())
+
+# Generates List of Professions
+pf = np.array(people_df["profession"])
+pf = pf[pf!=""]
+professionList = np.unique(pf)
+professions_df2 = people_df[(people_df['firstName'] == "") & (people_df['profession'] != '' )]
+pro = np.array(professions_df2["profession"])
+pro = pro[pro!=""]
+pro = np.unique(pro)
+professionList = np.concatenate((professionList, pro), axis=None)
+professionList = np.unique(professionList)
+
+# Generates List Of Organizations
+org_df = people_df[people_df['reference'] == 'Organization']
+org = np.array(org_df["lastName"])
+org = org[org!=""]
+organizationList = np.unique(org)
+
+# Generates List Of Accounts
+accounts_df = people_df[people_df['reference'] == 'Account']
+acc = np.array(accounts_df["lastName"])
+acc = acc[acc!=""]
+accountsList = np.unique(acc)
+
+# Generates List Of Places
+placesList = np.array(places_df["location"])
+place_df2 = people_df[people_df['reference'].str.contains('Place')]
+pl2 = np.array(place_df2["lastName"])
+pl2 = pl2[pl2!=""]
+placesList = np.concatenate((placesList, pl2), axis=None)
+remove_ = [word for word in placesList if "(" in word]
+for i, w in enumerate(remove_): 
+  x = np.where(placesList == w)
+  placesList = np.delete(placesList, x)
+  placesList = np.append(placesList,[i.split(' ', 1) for i in remove_][i][0])
+remove2 = [word for word in placesList if len(word.split("-"))>1]
+for i, w in enumerate(remove2): 
+  x = np.where(placesList == w)
+  placesList = np.delete(placesList, x)
+  placesList = np.append(placesList,[i.split(' ', 1) for i in remove2][i][0])
+placesList = np.array([item.strip() for item in placesList])
+placesList = np.unique(placesList)
+
+# Generates List of Place Aliases
+placeAliasList = places_df[places_df.alias != '']
+placeAliasList = placeAliasList.drop(['_id', "descriptor"], axis=1)
+
+# PLACES with more than one word in it's name
+multiPlacesList = [word for word in placesList if len(word.split())>1]
+multiPlacesList.sort()
+
+# Cleans up PEOPLE names
+ppl_df = people_df.copy()
+people_df2 = ppl_df[(ppl_df['reference'] != "Account")&(ppl_df['reference'] != 'Organization')&(ppl_df['reference'].str.contains('Place')==False)&(ppl_df['reference'] != 'Organization')]
+ppl_df = people_df2.drop(people_df2[(people_df2.firstName == "") & (people_df2.profession != '')].index)
+if ppl_df['firstName'].str.contains('&').any():
+  temp = ppl_df[ppl_df['firstName'].str.contains('&')].copy()
+  for value in temp['firstName']:
+        new = value.split('&')
+        x = temp[temp['firstName'] == value].copy()
+        ppl_df['firstName'].mask(ppl_df['firstName'] == value, new[0], inplace=True)
+        x['firstName'].mask(x['firstName'] == value, new[1], inplace=True)
+        ppl_df = pd.concat([ppl_df, x], ignore_index=True, sort=False)
+people_df = ppl_df
+
+# Generates List Of Prefixes
+pf = np.array(people_df["prefix"])
+pf = pf[pf!=""]
+prefixList = np.unique(pf)
+# Generates List Of First Names
+fn = np.array(people_df["firstName"])
+fn = fn[fn!=""]
+firstNameList = np.unique(fn)
+# Generates List Of Last Names
+ln = np.array(people_df["lastName"])
+ln = ln[ln!=""]
+lastNameList = np.unique(ln)
+# Generates List of Suffixes
+sx = np.array(people_df["suffix"])
+sx = sx[sx!=""]
+suffixList = np.unique(sx)
+
+# Generates List of Items
+items = item_df["item"].values.tolist()
+item_list = []
+adjs = []
+for word in items:
+    split = word.split(',')
+    item_list.append(split[0])
+    for i in range(1,len(split)):
+        w = split[i].strip()
+        adjs.append(w)
+item_list.extend(["Goods","Furniture","Interest","Land Tax","Turlingtons Balsam of Life","Clerks Note","Cattle & Provisions"])
+item_list.pop(item_list.index("Blue"))
+itemList = sorted(dict.fromkeys(item_list))
+# Generates list of ITEMS consisting of more than one word
+multiItemList = [word for word in itemList if len(word.split())>1]
+multiItemList.sort()
+# Generates List of ITEMS end in -ing / -ings
+ingItemList = [itemList[i] for i in range(len(itemList)) if itemList[i][-3:]== "ing"]
+ingItemList2 = [itemList[i] for i in range(len(itemList)) if itemList[i][-4:]== "ings"]
+# Removes multi-ITEMS from ITEM list
+itemList = set(itemList).difference(multiItemList)
+# Generates VARIANTS List
+variants = item_df["variants"].values.tolist()
+for word in variants:
+    word = word.replace('(',',')
+    word = word.replace(')','')
+    split = word.split(',')
+    for i in range(len(split)):
+        k = split[i].strip()
+        k.replace(')','')
+        adjs.append(k)
+while ("" in adjs):
+    adjs.remove('')
+variantList = sorted(dict.fromkeys(adjs))
+variantList.pop(variantList.index("Turlingtons"))
+# Generates List of ITEMS and VARIANTS that end in -ing / -ings
+ingVariantList = [variantList[i] for i in range(len(variantList)) if variantList[i][-3:]== "ing"]
+ingVariantList2 = [variantList[i] for i in range(len(variantList)) if variantList[i][-4:]== "ings"]
+ingList = ingItemList + ingItemList2 + ingVariantList + ingVariantList2
+# Generates List of Numerical VARIANTS
+numVariantList = [variantList[i] for i in range(len(variantList)) if variantList[i][0].isdigit()]
+numVariantList.sort()
+# Removes numerical VARIANTS from variant list
+variantList = set(variantList).difference(numVariantList)
+# Generates List of ITEMS that are also VARIANTS
+variantItemsList = sorted(set(itemList).intersection(variantList))
+
+# =========================================== #
+#    Lists Of Frequently Used Words/Values    #
+# =========================================== #
+
+# List of QUALIFIERS
+qualifierList = ["acre","bale","barrel","bushel","cord","day","dozen","ell","fathom","foot","feet","firkin","gallon","half","hank","hogshead",
+                "loaf","loaves","month","ounce","pair","piece","pint","pound","quart","quire","remnant","row","set","side","stick","yard","year","bottle","cask","pot","suit"]   
+# List of services
+servicesList = ["making", "mending", "postage", "waggonage", "freight","inspection","pasturage","ferriage","craft hire","hire","rent","wintering","carting","timber"]
+# List of relation types
+relationsList = ["mother","father","son","daughter","brother","sister","slave","boy","girl", "wench","lady","negro","negroes","uncle", "aunt","wife","husband","child","children"]
+personsList = ["man","men","woman","women","boy","girl"]  # List of people nouns
+keywordList = ["of", "by", "for", "the", "from", "to", "by","at"]  # List of KeyWords
+possessiveList = ["your", "his", "her", "my", "their", "our"]  # List of possesive pronouns
+itemQualList = ["bottle","cask","pot","suit"]  # List of ITEMS that are also QUALIFIERS
+numItems = ["Check","Dowlass","Linen","Nails","Rug","Stays","Breeches"]  # List of ITEMS with numnerical VARIANTS
+liquidItems = ["Rum","Ale", "Brandy"]  # List of liquid ITEMS
+conjunctions = ["&","and","with",",", "w/"]
+nonItems = ["Horses","Goods","Furniture","Interest","Land Tax","Clerks Note","Cattle & Provisions"]
+ignore = ["&", ":","/:"]
+
+# Initializing dictionaries
+peopleObject ={"profession": "", "prefix": "", "firstName": "", "lastName": "", "suffix": "", "account":"", "location": "", 
+                    "reference": "", "relations": ""}
+transactionObject ={"quantity": "", "qualifier": "", "variants": [], "item": "", "unitCost": "", "totalCost": "",
+                    "service": "", "includedItems": [],"mentionedPpl": [],"mentionedPlaces": [], "errorReview":[]}
+moneyObject = {"pounds": "", "shillings": "", "pence": ""}
+
+# =========================================== #
 #             General Functions               #
 # =========================================== #
 # Parses entries begining withan integer
@@ -329,19 +494,13 @@ def intFirstParse(array,transDict,transReview,peopleArray,placesArray,otherItems
 # Parses entries begining with a letter
 def alphaFirstParse(array,transDict,transReview,peopleArray,placesArray,otherItems): # sourcery skip: merge-duplicate-blocks, merge-nested-ifs, remove-redundant-if
     
-    # def checkForCost(array,index,transDict,transReview,placesArray,peopleArray,otherItems):
-    #     if array[-3]=="&" and array[-1] in [":","/:"]:
-    #             money = moneyObject.copy
-    #     if transDict["totalCost"]=="" or transDict["unitCost"]=="":
-    #         if array[-3]=="&" and array[-1] in [":","/:"]:
-    #             money = moneyObject.copy
-
-    #     if array[-1][0].isdigit() or array[-1] in [":","/:"]:
-    #      and (array[-1][0].isdigit()==True or ".." in array[-1]):
-    #         index = array.index(array[-1])
-    #         x = getCost(array,index,transDict,transReview,placesArray,peopleArray,otherItems) 
-    #         index = compareIdx(idx,x)
+    def checkForCost(array,index,transDict,transReview,placesArray,peopleArray,otherItems):
+        if transDict["totalCost"]=="" and transDict["unitCost"]=="" and (array[-1][0].isdigit()==True or ".." in array[-1]):
+            index = array.index(array[-1])
+            x = getCost(array,index,transDict,transReview,placesArray,peopleArray,otherItems) 
+            index = compareIdx(idx,x)
             
+    x = False
     idx = 0
     if array[0] in ["the", "a"]:  # Removes preceding "the"/"a"
         array.pop(0)
@@ -452,13 +611,18 @@ def alphaFirstParse(array,transDict,transReview,peopleArray,placesArray,otherIte
     elif any(word in '& and with' for word in array) == False and (array[-1][0].isdigit()==True or array[-1] in ["order"]):
         reverseParse(array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
     else:
+        x = True
+        searchAllKeywords(array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
+
+    if x == False:
         searchAllKeywords(array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
         
-    # if transDict["totalCost"] == "" and transDict["unitCost"] == "":
-    #     checkForCost(array,idx,transDict,transReview,placesArray,peopleArray,otherItems)
+    if transDict["totalCost"] == "" and transDict["unitCost"] == "":
+        checkForCost(array,idx,transDict,transReview,placesArray,peopleArray,otherItems)
 
     if transDict == transactionObject:
         transReview.append("Error: Transaction in unrecognizeable pattern.")
+
 
 # Determines if  transaction is a trade/bartern transaction
 def tradefor(array,idx,transDict,transReview,peopleArray,placesArray,otherItems):
@@ -502,10 +666,6 @@ def getCost(array,idx,transDict,transReview,peopleArray,placesArray,otherItems):
 
     if idx>0 and array[idx-1] == "at":
         flag = True  # Flag to store COST as UNIT COST
-
-    # if idx>0 and array[idx-1] == "&":
-    #     newTrans = transactionObject.copy()
-
     
     if len(array)>idx+1 and array[idx] in ["at","is"]:  # Checks if "at"/"is" precedes the COST
         if len(array)>idx+2 and array[idx] == "at" and array[idx+2] == "percent":
@@ -721,7 +881,7 @@ def findName(array,idx,peopleArray,transReview):
             return [newPplDict, idx]
 
 # Looks for a first name/prefix if a last name is found
-def reverseFindName(array,idx,peopleArray):
+def reverseFindName(array,idx,transReviwe,peopleArray):
     newPplDict = peopleObject.copy()   # Initializes new people dictionary
     while idx > 0: 
         if  array[idx] not in ignore and process.extractBests(array[idx], professionList, scorer=tsr, score_cutoff=86):  # Checks for professions following names
@@ -899,7 +1059,7 @@ def searchAllKeywords(array,idx,transDict,transReview,peopleArray,placesArray,ot
         expense_Keyword(array,index,transDict,transReview,peopleArray,placesArray,otherItems)
 
     if process.extractBests("account", array, scorer=tsr, score_cutoff=90):  # Checks for "account" keyword
-        account_Keyword(array, transReview, peopleArray, transDict)
+        (array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
 
     if "value" in array:   # Checks for "value" keyword
         value_Keyword(array, transReview,transDict)
@@ -909,10 +1069,10 @@ def searchAllKeywords(array,idx,transDict,transReview,peopleArray,placesArray,ot
 
     if "for" in array:    # Checks for "for" keyword
         idx = None
-        for_Keyword(array, idx, transDict, transReview, peopleArray)
+        for_Keyword(array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
 
     if process.extractBests("ballance", array, scorer=tsr, score_cutoff=87):   # Checks for "balance" keyword
-        balance_Keyword(array, transDict)
+        balance_Keyword(array,idx,transDict,transReview,peopleArray,placesArray,otherItems)
 
     for i in range(len(array) - 1):  # Checks for "on the" key phrase
         value = array[i:i+2]
@@ -1773,12 +1933,13 @@ def beginsSterlingCurrency(array,idx,transDict,transReview,peopleArray,placesArr
             else:
                 transDict["qualifier"] = "Percent"
                 transReview.append("Review: Confirm QUANTITY and QUALIFIER.")
+        
  
     idx=1# Sets index
     if len(array)> idx and array[idx] == "for":   # Checks for "for"
         idx+=1
 
-    while len(array)>idx:
+    while idx < len(array):
         if array[idx] == "the":  # Acounts for if "the" follows
             idx+=1
             if len(array)>idx+1 and array[idx] == "contra":  # Acounts for if "the contra" follows
@@ -1803,7 +1964,6 @@ def beginsSterlingCurrency(array,idx,transDict,transReview,peopleArray,placesArr
                 checkForAt()
         break
     return
-        
 # Handles transactions begining with a "Contra Balance"
 def beginsContraBalance(array,transDict,transReview, peopleArray, placesArray):
     transDict["item"] = "Contra Balance"
@@ -2718,8 +2878,11 @@ def at_Keyword(array,transReview,peopleArray,placesArray):
         
 # Handles the "balance" keyword
 def balance_Keyword(array,idx,transDict,transReview,peopleArray,placesArray,otherItems):
-    idx = array.index("balance")  # Gets the array index of "balance"
-        
+    if process.extractBests("balance",array,scorer=fuzz.QRatio,score_cutoff=86):
+        idx = array.index(process.extractBests("balance",array,scorer=fuzz.QRatio,score_cutoff=86)[0][0])  # Gets the array index of "balance"
+    if process.extractBests("ballance",array,scorer=fuzz.QRatio,score_cutoff=86):
+        idx = array.index(process.extractBests("ballance",array,scorer=fuzz.QRatio,score_cutoff=86)[0][0])  # Gets the array index of "balance" 
+
     # Removes other keywords attached to "balance"   
     if idx > 0 and array[idx-1] == "the":
         array[idx-1] = ""
@@ -3059,7 +3222,7 @@ def and_item(array,idx,transDict,transReview,peopleArray,placesArray,otherItems,
                 return idx
 
     if flag[0] == "item":
-        print(array[idx])
+        
         if array[idx] not in ignore and process.extractBests(lem.lemmatize(array[idx]),servicesList,scorer=tsr,score_cutoff=95):  # Checks for known SERVICE
             newItem["service"] = process.extractBests(lem.lemmatize(array[idx]),servicesList,scorer=tsr,score_cutoff=95)[0][0]
             idx+=1
@@ -3094,9 +3257,6 @@ def and_item(array,idx,transDict,transReview,peopleArray,placesArray,otherItems,
             if newItem != transactionObject:
                 otherItems.append(newItem)
         elif array[idx][0].isdigit()==True and len(array)==idx+1:  # ITEM & PRICE
-            x = getCost(array,idx,newItem,transReview,peopleArray,placesArray,otherItems)
-            idx = compareIdx(idx,x)
-        elif array[idx][0].isdigit()==True and len(array)==idx+1 or array[-1] in [":","/:"]:  # ITEM & PRICE
             x = getCost(array,idx,newItem,transReview,peopleArray,placesArray,otherItems)
             idx = compareIdx(idx,x)
         elif len(array)>idx+1 and array[idx][0].isdigit()==True and array[idx+1] in ["currency","sterling"]:  # ITEM & PRICE
