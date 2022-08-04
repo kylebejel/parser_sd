@@ -1,5 +1,6 @@
 import re
 import datetime
+from xml.etree.ElementTree import tostring
 import nltk
 import numpy as np
 import pandas as pd
@@ -3590,7 +3591,7 @@ def parse(df):
                 entry_obj['accountHolder'] = acc_holder_obj
                 entry_obj['meta'] = meta_obj
                 entry_obj['dateInfo'] = date_obj
-                entry_obj['folioRefs'] = folio_reference[counter]
+                entry_obj['folioRefs'] = []
                 entry_obj['ledgerRefs'] = None
                 entry_obj['itemEntries?'] = []
                 entry_obj['itemEntries?'].append(item_entry_obj)
@@ -3649,7 +3650,7 @@ def parse(df):
             entry_obj['accountHolder'] = acc_holder_obj
             entry_obj['meta'] = meta_obj
             entry_obj['dateInfo'] = date_obj
-            entry_obj['folioRefs'] = folio_reference[counter].split(",")
+            entry_obj['folioRefs'] = []
             entry_obj['ledgerRefs'] = []
             entry_obj['itemEntries?'] = []
             entry_obj['itemEntries?'].append(item_entry_obj)
