@@ -4,11 +4,7 @@ import xlwt
 from pathlib import Path
 import numpy as np
 
-def preprocess(arr):
-    pass
 
-def parse_transaction():
-    pass
 
 # code for the function that parses everything
 def parse(df):

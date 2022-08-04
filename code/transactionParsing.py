@@ -2976,7 +2976,7 @@ def for_Keyword(array,idx,transDict,transReview,peopleArray,placesArray,otherIte
 # Handles "&", "and", "with", and commas
 def and_item(array,idx,transDict,transReview,peopleArray,placesArray,otherItems,flag):
     newItem = transactionObject.copy()
-    print(idx)
+    print("{array[idx]}")
     def itemComparison(transDict,newItem,flag=None):
         if otherItems != [] and len(otherItems)>1:
             compareItem = otherItems[-1].copy()
