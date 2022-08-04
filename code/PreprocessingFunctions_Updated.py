@@ -103,9 +103,10 @@ def editTokens(text):
 
   #remove all character removals '^','[',']','<','>', '{', '}', '(', ')',  '&ct', 'etcetera', 'Etcetera', '£'
   removals = ['^','[',']','<','>', '{', '}', '(', ')', '&ct', 'etcetera', 'Etcetera', '£','?']  # add all characters to be removed to this list
-  for count, character in itertools.product(range(len(tokens)), removals):
-    while character in tokens[count]:
-      tokens[count] = tokens[count].replace(character,"")
+  for count in range(0,len(tokens)):
+    for character in removals:
+      while character in tokens[count]:
+        tokens[count] = tokens[count].replace(character,"")
         
   #remove "" tokens
   while ("" in tokens):
