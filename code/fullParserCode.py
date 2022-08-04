@@ -3505,11 +3505,12 @@ def parse(df):
 
         # date obj
         date_obj = {}
-        date_obj['day'] = day[counter]
-        date_obj['month'] = month[counter]
-        date_obj['year'] = year[counter]
+        date_obj["day"] = datetime.datetime.now().day
+        date_obj["month"] = datetime.datetime.now().month
+        date_obj["year"] = datetime.datetime.now().year
+        date_obj["fullDate"] = int(datetime.datetime.utcnow().strftime('%Y%m%d'))
         # change to an appended datetime obj
-        date_obj['fullDate'] = None
+        # date_obj['fullDate'] = None
 
         # date_obj_list.append(date_obj)
 
@@ -3648,8 +3649,8 @@ def parse(df):
             entry_obj['accountHolder'] = acc_holder_obj
             entry_obj['meta'] = meta_obj
             entry_obj['dateInfo'] = date_obj
-            entry_obj['folioRefs'] = folio_reference[counter]
-            entry_obj['ledgerRefs'] = None
+            entry_obj['folioRefs'] = folio_reference[counter].split(",")
+            entry_obj['ledgerRefs'] = []
             entry_obj['itemEntries?'] = []
             entry_obj['itemEntries?'].append(item_entry_obj)
             entry_obj['tobaccoEntry?'] = None # CHANGE THIS 
@@ -3659,8 +3660,9 @@ def parse(df):
             entry_obj['entry'] = entry[counter]
             entry_obj['money'] = money_obj
             entry_obj['__v'] = 0
-            entry_obj['createdAt'] = datetime.datetime.utcnow()
-            entry_obj['updatedAt'] = datetime.datetime.utcnow()
+            entry_obj['documentName'] = None
+            entry_obj['createdAt'] = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+            entry_obj['updatedAt'] = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
             entry_obj['errorReview'] = transaction[4]
 
                 # append
