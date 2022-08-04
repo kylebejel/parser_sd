@@ -1,14 +1,9 @@
 import re
-from os import unlink
-from re import I
-from tkinter import Y
 import nltk
 import numpy as np
 import pandas as pd
 import pymongo
 from fuzzywuzzy import fuzz, process
-from regex import P, R
-from sympy import O
 
 #create function that separates 1 entry column into multiple entries to pass to next function
 def seperate(text):
