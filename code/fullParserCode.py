@@ -3115,7 +3115,7 @@ def convertPeopleObject(peopleArray):
 # ***************************************************************************************************************************** #
 
 # Function that parses the transactions from the entry column (transArr = array/list of transactions)
-def parse_transactions(transArr):    # sourcery skip: hoist-statement-from-loop
+def parse_transaction(transArr):    # sourcery skip: hoist-statement-from-loop
  # Initializes error array for entry
     entryErrors = []
     parsedTransactionsArray = []
